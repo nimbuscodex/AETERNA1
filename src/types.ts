@@ -9,6 +9,8 @@ export interface ArticleFrontmatter {
   image: string;
   date: string;
   nivel?: number;
+  orden?: number;
+  nivel_titulo?: string;
   insignia?: string;
   tipo?: "theory" | "practice" | "philosophy" | "milestone";
   _path?: string;

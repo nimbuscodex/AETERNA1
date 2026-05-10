@@ -18,6 +18,10 @@ import AeternaFaq from "@/components/AeternaFaq";
 import { AeternaPracticeProblem } from "@/components/AeternaPracticeProblem";
 import { AeternaExercise } from "@/components/AeternaExercise";
 import { AeternaAffiliate } from "@/components/AeternaAffiliate";
+import { BotonConexiones, BotonEjemplos, BotonProfundizar, BotonSimplificar, AccionBotones } from "@/components/interactive/AccionBotones";
+import { NivelContenido } from "@/components/interactive/NivelContenido";
+import { NivelSelector } from "@/components/interactive/NivelSelector";
+import { LevelProvider } from "@/context/LevelContext";
 import { useGamification } from "@/context/GamificationContext";
 import type { ArticleFrontmatter } from "@/types";
 import { ROADMAPS } from "@/data/roadmaps";
@@ -332,7 +336,7 @@ const markdownComponents: any = {
       if (child.type === "code" || (typeof child.type === "function" && child.type.name === "code")) {
         const childProps = child.props as any;
         const match = /language-([\w-]+)/.exec(childProps.className || "");
-        if (match && (match[1] === "aeterna-question" || match[1] === "aeterna-decision" || match[1] === "aeterna-equation" || match[1] === "interactive-kana" || match[1] === "interactive-kana-v2" || match[1] === "aeterna-practice" || match[1] === "aeterna-exercise" || match[1] === "aeterna-resueltos" || match[1] === "aeterna-resuelto" || match[1] === "aeterna-affiliate")) {
+        if (match && (match[1] === "aeterna-question" || match[1] === "aeterna-decision" || match[1] === "aeterna-equation" || match[1] === "interactive-kana" || match[1] === "interactive-kana-v2" || match[1] === "aeterna-practice" || match[1] === "aeterna-exercise" || match[1] === "aeterna-resueltos" || match[1] === "aeterna-resuelto" || match[1] === "aeterna-affiliate" || match[1] === "aeterna-boton" || match[1] === "aeterna-accion-botones" || match[1] === "aeterna-nivel-contenido" || match[1] === "aeterna-nivel-selector")) {
           return <>{children}</>;
         }
       }
@@ -388,6 +392,49 @@ const markdownComponents: any = {
     }
     if (match && match[1] === "aeterna-exercise") {
       return <AeternaExercise content={textContent} />;
+    }
+    if (match && match[1] === "aeterna-boton") {
+      try {
+        const data = JSON.parse(decodeURIComponent(atob(textContent)));
+        const Component = data.type === 'BotonSimplificar' ? BotonSimplificar :
+                          data.type === 'BotonProfundizar' ? BotonProfundizar :
+                          data.type === 'BotonEjemplos' ? BotonEjemplos :
+                          data.type === 'BotonConexiones' ? BotonConexiones : BotonSimplificar;
+        return (
+          <Component>
+            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSlug]} components={markdownComponents}>
+              {data.content}
+            </ReactMarkdown>
+          </Component>
+        );
+      } catch(e) { return <div className="text-red-500">Error rendering button</div>; }
+    }
+    if (match && match[1] === "aeterna-accion-botones") {
+      return (
+        <AccionBotones>
+          <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSlug]} components={markdownComponents}>
+            {decodeURIComponent(atob(textContent))}
+          </ReactMarkdown>
+        </AccionBotones>
+      );
+    }
+    if (match && match[1] === "aeterna-nivel-contenido") {
+      try {
+        const levels = JSON.parse(decodeURIComponent(atob(textContent)));
+        return (
+          <NivelContenido 
+            principiante={levels.principiante ? <div className="markdown-body"><ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSlug]} components={markdownComponents}>{levels.principiante}</ReactMarkdown></div> : undefined}
+            intermedio={levels.intermedio ? <div className="markdown-body"><ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSlug]} components={markdownComponents}>{levels.intermedio}</ReactMarkdown></div> : undefined}
+            avanzado={levels.avanzado ? <div className="markdown-body"><ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSlug]} components={markdownComponents}>{levels.avanzado}</ReactMarkdown></div> : undefined}
+          />
+        );
+      } catch(e) { return <div className="text-red-500">Error rendering content level</div>; }
+    }
+    if (match && match[1] === "aeterna-nivel-selector") {
+      try {
+        const props = JSON.parse(decodeURIComponent(atob(textContent)));
+        return <NivelSelector niveles={props.niveles} nivelPorDefecto={props.nivelPorDefecto} />;
+      } catch(e) { return <LevelProvider><NivelSelector /></LevelProvider>; }
     }
     if (match && match[1] === "aeterna-affiliate") {
       return <AeternaAffiliate content={textContent} />;
@@ -609,7 +656,104 @@ export function ArticlePage({ overrideSlug }: { overrideSlug?: string }) {
   const readTime = Math.ceil(words / 225) || 1;
 
   // Pre-process markdown to convert custom blocks to code blocks
-  let processedContent = content.replace(/::aeterna-question([\s\S]*?)::/g, (match, inner) => {
+  let processedContent = content;
+
+  const dedent = (text: string) => {
+    const lines = text.split('\n');
+    let minIndent = Infinity;
+    for (const line of lines) {
+      if (line.trim().length > 0) {
+        const indent = line.match(/^[ \t]*/)?.[0].length || 0;
+        minIndent = Math.min(minIndent, indent);
+      }
+    }
+    if (minIndent === Infinity || minIndent === 0) return text;
+    return lines.map(line => line.length >= minIndent ? line.substring(minIndent) : line).join('\n');
+  };
+
+  // Render Botones (we process innermost first)
+  const BOTON_TYPES = ['BotonSimplificar', 'BotonProfundizar', 'BotonEjemplos', 'BotonConexiones'];
+  BOTON_TYPES.forEach(type => {
+    const regex = new RegExp(`<${type}>([\\s\\S]*?)<\\/${type}>`, 'g');
+    processedContent = processedContent.replace(regex, (match, inner) => {
+       return `\n\`\`\`aeterna-boton\n${btoa(encodeURIComponent(JSON.stringify({ type, content: dedent(inner) })))}\n\`\`\`\n`;
+    });
+  });
+
+  // AccionBotones
+  processedContent = processedContent.replace(/<AccionBotones>([\s\S]*?)<\/AccionBotones>/g, (match, inner) => {
+    return `\n\`\`\`aeterna-accion-botones\n${btoa(encodeURIComponent(dedent(inner)))}\n\`\`\`\n`;
+  });
+
+  // AeternaDecisionBox handling when passed structurally
+  processedContent = processedContent.replace(/<AeternaDecisionBox([\s\S]*?)(?<!<)\/>/g, (match, propsStr) => {
+    // Parse question
+    const qMatch = propsStr.match(/question=["']([^"']+)["']/);
+    const question = qMatch ? qMatch[1] : '';
+    
+    // Parse options
+    const options: string[] = [];
+    const optRegex = /text:\s*["']([^"']+)["']/g;
+    let optMatch;
+    while ((optMatch = optRegex.exec(propsStr)) !== null) {
+      options.push(optMatch[1]);
+    }
+    
+    // Parse correctIndex
+    const idxMatch = propsStr.match(/correctIndex=\{?(\d+)\}?/);
+    const correctIndex = idxMatch ? parseInt(idxMatch[1]) : 0;
+    
+    let newContent = `Pregunta: ${question}\nOpciones:\n`;
+    options.forEach(opt => {
+      newContent += `- ${opt}\n`;
+    });
+    if (options[correctIndex]) {
+      newContent += `RespuestaCorrecta: ${options[correctIndex]}\n`;
+    }
+    
+    return `\n\`\`\`aeterna-question\n${newContent}\n\`\`\`\n`;
+  });
+
+  // NivelContenido
+  processedContent = processedContent.replace(/<NivelContenido([\s\S]*?)(?<!<)\/>/g, (match, inner) => {
+    const levels: any = {};
+    const regex = /(principiante|intermedio|avanzado)=\{\s*<>\n?([\s\S]*?)\n?\s*<\/>\s*\}/g;
+    let m;
+    while ((m = regex.exec(inner)) !== null) {
+      levels[m[1]] = dedent(m[2]);
+    }
+    if (Object.keys(levels).length === 0) {
+      const backupRegex = /(principiante|intermedio|avanzado)=\{([^}]*)\}/g;
+      let m2;
+      while ((m2 = backupRegex.exec(inner)) !== null) {
+        levels[m2[1]] = dedent(m2[2].replace(/^\s*<>\n?/, '').replace(/\n?\s*<\/>\s*$/, ''));
+      }
+    }
+    return `\n\`\`\`aeterna-nivel-contenido\n${btoa(encodeURIComponent(JSON.stringify(levels)))}\n\`\`\`\n`;
+  });
+
+  // NivelSelector
+  processedContent = processedContent.replace(/<NivelSelector([\s\S]*?)(?<!<)\/>/g, (match, propsStr) => {
+    let niveles = ["Principiante", "Intermedio", "Avanzado"];
+    let nivelPorDefecto = "Intermedio";
+    
+    const nivelesMatch = propsStr.match(/niveles=\{([^}]+)\}/);
+    if (nivelesMatch) {
+      try {
+        const arrStr = nivelesMatch[1].replace(/'/g, '"');
+        niveles = JSON.parse(arrStr);
+      } catch(e) {}
+    }
+    
+    const defMatch = propsStr.match(/nivelPorDefecto=["']([^"']+)["']/);
+    if (defMatch) {
+      nivelPorDefecto = defMatch[1];
+    }
+    
+    return `\n\`\`\`aeterna-nivel-selector\n${btoa(encodeURIComponent(JSON.stringify({ niveles, nivelPorDefecto })))}\n\`\`\`\n`;
+  });
+
+  processedContent = processedContent.replace(/::aeterna-question([\s\S]*?)::/g, (match, inner) => {
     return `\`\`\`aeterna-question\n${inner.trim()}\n\`\`\``;
   });
   
@@ -801,6 +945,7 @@ export function ArticlePage({ overrideSlug }: { overrideSlug?: string }) {
             </AnimatePresence>
           </div>
 
+          <LevelProvider>
           <article className="w-full">
             {/* Article Reading Progression Bar */}
             {headings.length > 0 && (
@@ -954,6 +1099,7 @@ export function ArticlePage({ overrideSlug }: { overrideSlug?: string }) {
              </div>
           </div>
         </article>
+        </LevelProvider>
         </div>
       </div>
 

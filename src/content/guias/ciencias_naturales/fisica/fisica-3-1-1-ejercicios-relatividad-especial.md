@@ -9,6 +9,7 @@ tags: ["física", "relatividad especial", "Einstein", "dilatación del tiempo", 
 image: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=2070&auto=format&fit=crop"
 date: "2026-05-09"
 nivel: 3
+orden : 2
 insignia: "Explorador de lo Oculto"
 tipo: practice
 ---
