@@ -1,0 +1,63 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Primitives
+    function isValidId(id) { 
+      // More lenient ID check to avoid issues with different UID formats
+      return id is string && id.size() > 0 && id.size() <= 128; 
+    }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isSignedIn() { return request.auth != null; }
+
+    // Validation
+    function isValidUserProgress(data) {
+      // Must have exact core keys + optional. 
+      return data.keys().hasAll(['xp', 'level', 'ownerId'])
+        && data.ownerId is string && data.ownerId == request.auth.uid
+        && data.xp is number
+        && data.level is number
+        && (!('completedPaths' in data) || (data.completedPaths is list && data.completedPaths.size() <= 2000))
+        && (!('unlockedRoadmaps' in data) || (data.unlockedRoadmaps is list && data.unlockedRoadmaps.size() <= 1000))
+        && (!('achievements' in data) || (data.achievements is list && data.achievements.size() <= 1000))
+        && (!('answeredQuestions' in data) || (data.answeredQuestions is list && data.answeredQuestions.size() <= 5000))
+        && (!('dailyStreak' in data) || data.dailyStreak is number)
+        && (!('lastActiveDate' in data) || (data.lastActiveDate is string && data.lastActiveDate.size() <= 128))
+        && (!('selectedAvatarId' in data) || (data.selectedAvatarId is string && data.selectedAvatarId.size() <= 128))
+        && (!('articleProgress' in data) || data.articleProgress is map);
+    }
+
+    match /aeternaProgressV3/{userId} {
+      allow get: if isSignedIn() && isValidId(userId) && request.auth.uid == userId;
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      
+      allow create: if isSignedIn() 
+        && isValidId(userId)
+        && userId == request.auth.uid
+        && isValidUserProgress(incoming());
+
+      allow update: if isSignedIn()
+        && isValidId(userId)
+        && userId == request.auth.uid
+        && existing().ownerId == request.auth.uid
+        && isValidUserProgress(incoming())
+        && incoming().ownerId == existing().ownerId
+        && (
+          // If the payload includes unchanged keys, they shouldn't be in affectedKeys(),
+          // but we whitelist them just in case some client SDKs behave differently.
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'xp', 'level', 'completedPaths', 'unlockedRoadmaps', 
+            'articleProgress', 'selectedAvatarId', 'dailyStreak', 'lastActiveDate', 'achievements',
+            'answeredQuestions', 'ownerId'
+          ])
+        );
+        
+      allow delete: if false;
+    }
+  }
+}

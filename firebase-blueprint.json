@@ -1,0 +1,31 @@
+{
+  "entities": {
+    "userProgress": {
+      "title": "User Progress",
+      "description": "Stores user gamification progress and stats",
+      "type": "object",
+      "properties": {
+        "xp": { "type": "number", "description": "Total XP" },
+        "level": { "type": "number", "description": "Current level" },
+        "completedPaths": { "type": "array", "items": { "type": "string" }, "description": "Array of completed path IDs", "maxItems": 1000 },
+        "unlockedRoadmaps": { "type": "array", "items": { "type": "string" }, "description": "Array of unlocked roadmaps", "maxItems": 1000 },
+        "articleProgress": { "type": "object", "additionalProperties": { "type": "number" }, "description": "Map of articleId to percentage" },
+        "selectedAvatarId": { "type": "string", "description": "Selected avatar ID" },
+        "answeredQuestions": { "type": "array", "items": { "type": "string" }, "description": "Array of answered question IDs", "maxItems": 5000 },
+        "dailyStreak": { "type": "number", "description": "Daily login streak" },
+        "lastActiveDate": { "type": "string", "description": "Last active date as ISO string (YYYY-MM-DD)" },
+        "achievements": { "type": "array", "items": { "type": "string" }, "description": "Array of achievement IDs", "maxItems": 1000 },
+        "ownerId": { "type": "string", "description": "The UID of the user who owns this progress record" }
+      },
+      "required": ["xp", "level", "ownerId"]
+    }
+  },
+  "firestore": {
+    "/aeternaProgressV3/{userId}": {
+      "schema": {
+        "$ref": "#/entities/userProgress"
+      },
+      "description": "Stores the gamification progress for each user, mapped 1:1 by userId"
+    }
+  }
+}

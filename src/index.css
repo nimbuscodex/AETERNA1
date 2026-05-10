@@ -1,0 +1,326 @@
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
+@import "./aeterna.css";
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
+
+@custom-variant dark (&:is(.dark *));
+@plugin "@tailwindcss/typography";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Playfair Display", serif;
+
+  --color-brand-offwhite: var(--brand-offwhite);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-blue: var(--brand-blue);
+  --color-brand-gold: var(--brand-gold);
+  --color-brand-cosmic: var(--brand-cosmic);
+  --color-brand-border: var(--brand-border);
+  --color-brand-accent-hover: var(--brand-accent-hover);
+  --color-brand-muted: var(--brand-muted);
+  --shadow-3xl: 0 35px 60px -15px rgba(0, 0, 0, 0.3);
+}
+
+@layer base {
+  .bg-engraving {
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 30L0 30M30 0L30 30M60 30L30 30M30 60L30 30' stroke='%23C5A059' stroke-width='0.5' fill='none' stroke-opacity='0.15'/%3E%3C/svg%3E");
+  }
+}
+
+@layer base {
+  :root {
+    --brand-offwhite: #FDFDFC;
+    --brand-ink: #111111;
+    --brand-blue: #3E5B76;
+    --brand-gold: #C5A059;
+    --brand-cosmic: #0EA5E9;
+    --brand-border: #E8E8E5;
+    --brand-accent-hover: #F8F8F6;
+    --brand-muted: #808080;
+  }
+
+  .dark {
+    --brand-offwhite: #0A0A0A;
+    --brand-ink: #F2F2F2;
+    --brand-blue: #639CC9;
+    --brand-gold: #D4AF37;
+    --brand-cosmic: #22D3EE;
+    --brand-border: #1F1F1F;
+    --brand-accent-hover: #141414;
+    --brand-muted: #888888;
+  }
+
+  html {
+    scroll-smooth: transition; /* Some browsers might need this, but tailwind uses scroll-smooth class or just CSS */
+    @apply scroll-smooth font-sans;
+  }
+
+  body {
+    @apply font-sans antialiased selection:bg-brand-blue selection:text-brand-offwhite bg-background text-foreground;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif tracking-tight font-normal;
+  }
+  * {
+    @apply border-border outline-ring/50;
+  }
+}
+
+.text-gradient-ink {
+  @apply text-brand-ink;
+}
+
+.bg-paper {
+  @apply bg-brand-offwhite;
+}
+
+.border-grid {
+  @apply border-brand-border;
+}
+
+.markdown-body {
+  @apply prose prose-neutral md:prose-lg lg:prose-xl max-w-none 
+         prose-headings:font-serif prose-headings:font-normal prose-headings:scroll-mt-32 prose-headings:text-brand-ink
+         prose-h2:text-4xl lg:prose-h2:text-5xl prose-h2:mt-20 prose-h2:mb-10 prose-h2:tracking-tight
+         prose-h3:font-sans prose-h3:font-semibold prose-h3:text-sm prose-h3:uppercase prose-h3:tracking-[0.4em] prose-h3:text-brand-cosmic prose-h3:mt-16 prose-h3:mb-8 prose-h3:flex prose-h3:items-center prose-h3:gap-4
+         prose-h3:before:content-[''] prose-h3:before:block prose-h3:before:w-16 prose-h3:before:h-[2px] prose-h3:before:bg-brand-cosmic
+         prose-p:font-serif prose-p:text-xl lg:prose-p:text-[22px] prose-p:leading-[1.8] md:prose-p:leading-[2] prose-p:text-[#2c2c2c] prose-p:tracking-[-0.01em] prose-p:mb-8
+         prose-a:text-brand-cosmic prose-a:decoration-brand-cosmic/30 hover:prose-a:decoration-brand-cosmic
+         prose-strong:text-black prose-strong:[text-shadow:1px_1px_1px_rgba(0,0,0,0.8)]
+         prose-blockquote:font-serif prose-blockquote:text-2xl lg:prose-blockquote:text-3xl prose-blockquote:italic prose-blockquote:border-l-4 prose-blockquote:border-brand-gold prose-blockquote:bg-gradient-to-r prose-blockquote:from-brand-gold/10 prose-blockquote:to-transparent prose-blockquote:py-8 prose-blockquote:px-10 prose-blockquote:rounded-r-2xl prose-blockquote:my-16 prose-blockquote:text-brand-ink/90 prose-blockquote:shadow-sm prose-blockquote:leading-relaxed
+         prose-li:font-serif prose-li:text-xl lg:prose-li:text-[22px] prose-li:text-[#2c2c2c] prose-li:leading-[1.8] md:prose-li:leading-[2]
+         prose-ul:my-10 prose-ol:my-10 prose-li:pl-2
+         prose-hr:border-brand-border prose-hr:my-20 prose-hr:border-t-2 prose-hr:mx-auto prose-hr:w-3/4
+         prose-table:border-collapse prose-table:w-full prose-table:my-12
+         prose-th:bg-brand-cosmic/5 prose-th:px-6 prose-th:py-4 prose-th:text-xs prose-th:font-bold prose-th:uppercase prose-th:tracking-widest prose-th:border-b-2 prose-th:border-brand-cosmic
+         prose-td:px-6 prose-td:py-4 prose-td:border-b prose-td:border-brand-border
+         prose-img:rounded-xl prose-img:shadow-xl prose-img:my-12;
+}
+
+@media print {
+  nav, 
+  footer, 
+  aside,
+  [role="progressbar"],
+  .fixed,
+  .sticky,
+  button,
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .markdown-body {
+    font-size: 11pt !important;
+    line-height: 1.5 !important;
+    max-width: 100% !important;
+  }
+
+  .markdown-body h1,
+  .markdown-body h2,
+  .markdown-body h3 {
+    page-break-after: avoid;
+  }
+
+  .markdown-body p,
+  .markdown-body div,
+  .markdown-body img {
+    page-break-inside: avoid;
+  }
+
+  /* Reset layout for print */
+  .mx-auto {
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  .flex-col, .flex-row, .flex {
+    display: block !important;
+  }
+
+  header {
+    padding-top: 0 !important;
+    margin-bottom: 2rem !important;
+    text-align: left !important;
+  }
+
+  header h1 {
+    font-size: 28pt !important;
+    margin-bottom: 1rem !important;
+    -webkit-text-fill-color: black !important;
+    background-image: none !important;
+    color: black !important;
+  }
+
+  header p {
+    font-size: 14pt !important;
+  }
+
+  section img {
+    max-height: 400px !important;
+    object-fit: contain !important;
+  }
+}
+
+@theme inline {
+  --font-heading: var(--font-sans);
+  --font-sans: 'Geist Variable', sans-serif;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+div#root > div > main > div > section:nth-of-type(1) {
+  background-color: #05050A !important;
+  background-image: 
+    radial-gradient(1.2px 1.2px at 10% 20%, #ffffff 100%, transparent),
+    radial-gradient(2px 2px at 40% 60%, rgba(212,175,55, 0.8) 100%, transparent),
+    radial-gradient(1px 1px at 70% 30%, #ffffff 100%, transparent),
+    radial-gradient(1.5px 1.5px at 90% 80%, rgba(255,255,255,0.7) 100%, transparent),
+    radial-gradient(1px 1px at 20% 90%, #ffffff 100%, transparent),
+    radial-gradient(2.5px 2.5px at 80% 10%, rgba(212,175,55, 0.6) 100%, transparent),
+    radial-gradient(1px 1px at 50% 50%, #ffffff 100%, transparent),
+    radial-gradient(1.5px 1.5px at 30% 40%, rgba(255,255,255,0.9) 100%, transparent),
+    radial-gradient(2px 2px at 15% 75%, rgba(212,175,55, 0.7) 100%, transparent),
+    radial-gradient(1px 1px at 85% 45%, #ffffff 100%, transparent),
+    radial-gradient(3px 3px at 60% 85%, rgba(212,175,55, 0.5) 100%, transparent),
+    radial-gradient(1.2px 1.2px at 35% 15%, #ffffff 100%, transparent),
+    radial-gradient(ellipse at center, rgba(14,165,233,0.1) 0%, transparent 60%) !important;
+  background-size: 200px 200px, 150px 150px, 250px 250px, 180px 180px, 220px 220px, 300px 300px, 170px 170px, 240px 240px, 190px 190px, 270px 270px, 350px 350px, 160px 160px, 100% 100% !important;
+  background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, center !important;
+}
+
+div#root > div > main > div.home-page-container > section:nth-of-type(1) {
+  background-color: transparent !important;
+  background-image: 
+    radial-gradient(1.2px 1.2px at 10% 20%, rgba(255, 255, 255, 0.5) 100%, transparent),
+    radial-gradient(2px 2px at 40% 60%, rgba(212,175,55, 0.4) 100%, transparent),
+    radial-gradient(1px 1px at 70% 30%, rgba(255, 255, 255, 0.5) 100%, transparent),
+    radial-gradient(1.5px 1.5px at 90% 80%, rgba(255,255,255,0.3) 100%, transparent),
+    radial-gradient(1px 1px at 20% 90%, rgba(255, 255, 255, 0.5) 100%, transparent),
+    radial-gradient(2.5px 2.5px at 80% 10%, rgba(212,175,55, 0.3) 100%, transparent),
+    radial-gradient(1px 1px at 50% 50%, rgba(255, 255, 255, 0.5) 100%, transparent),
+    radial-gradient(1.5px 1.5px at 30% 40%, rgba(255,255,255,0.4) 100%, transparent),
+    radial-gradient(2px 2px at 15% 75%, rgba(212,175,55, 0.3) 100%, transparent),
+    radial-gradient(1px 1px at 85% 45%, rgba(255, 255, 255, 0.5) 100%, transparent),
+    radial-gradient(3px 3px at 60% 85%, rgba(212,175,55, 0.2) 100%, transparent),
+    radial-gradient(1.2px 1.2px at 35% 15%, rgba(255, 255, 255, 0.5) 100%, transparent),
+    radial-gradient(ellipse at center, rgba(14,165,233,0.05) 0%, transparent 60%) !important;
+  background-size: 200px 200px, 150px 150px, 250px 250px, 180px 180px, 220px 220px, 300px 300px, 170px 170px, 240px 240px, 190px 190px, 270px 270px, 350px 350px, 160px 160px, 100% 100% !important;
+  background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, center !important;
+}
