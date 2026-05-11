@@ -1,4 +1,18 @@
-import type { ArticleFrontmatter } from "@/types";
+import type { ArticleFrontmatter, AeternaArticle } from "@/types";
+
+export async function getStructuredArticleBySlug(slug: string): Promise<AeternaArticle | null> {
+  const modules = (import.meta as any).glob("/src/data/articles/*.json");
+  
+  // Try to find the module that matches the slug
+  for (const path in modules) {
+    if (path.includes(`${slug}.json`)) {
+      const data = await modules[path]();
+      return (data.default || data) as AeternaArticle;
+    }
+  }
+  
+  return null;
+}
 
 // Helper to parse frontmatter from string
 function parseFrontmatter(markdown: string, filePath: string): { data: ArticleFrontmatter; content: string } {

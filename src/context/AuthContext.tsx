@@ -39,17 +39,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signInWithGoogle = async () => {
+    console.log('Iniciando sesión con Google...');
     try {
+      // Intentar primero con Popup
       await signInWithPopup(auth, googleProvider);
+      console.log('Sesión iniciada con éxito via Popup');
     } catch (error: any) {
-      console.error('Error signing in with Google', error);
-      if (error.code === 'auth/popup-blocked' || error.code === 'auth/cancelled-popup-request') {
-        alert('Si tu navegador bloquea la ventana emergente de inicio de sesión o se cierra, serás redirigido directamente a Google.');
+      console.error('Error en signInWithPopup:', error);
+      
+      // Si el popup está bloqueado o cancelado, intentar redirección
+      if (
+        error.code === 'auth/popup-blocked' || 
+        error.code === 'auth/cancelled-popup-request' ||
+        error.code === 'auth/popup-closed-by-user'
+      ) {
+        console.log('Popup bloqueado o cerrado, intentando redirección...');
         try {
           await signInWithRedirect(auth, googleProvider);
         } catch (redirectError) {
-          console.error("Error redirecting to Google:", redirectError);
+          console.error("Error en signInWithRedirect:", redirectError);
+          alert('Error crítico: No se pudo redirigir a Google. Verifica que el dominio está autorizado en Firebase.');
         }
+      } else {
+        alert(`Error de autentificación: ${error.message}`);
       }
     }
   };

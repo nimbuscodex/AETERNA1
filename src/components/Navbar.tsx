@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { useGamification, ACHIEVEMENTS, AVATARS, formatXP } from "../context/GamificationContext";
 import { useAuth } from "../context/AuthContext";
 import { ThemeToggle } from "./ThemeToggle";
+import { LoginModal } from "./LoginModal";
 
 interface NavItem {
   name: string;
@@ -24,6 +25,7 @@ const NAV_ITEMS: NavItem[] = [
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [showMega, setShowMega] = useState(false);
   const location = useLocation();
   const { progress } = useGamification();
@@ -82,7 +84,7 @@ export function Navbar() {
 
             {!user ? (
               <button
-                onClick={signInWithGoogle}
+                onClick={() => setIsLoginModalOpen(true)}
                 className="hidden lg:flex items-center gap-3 text-[10px] uppercase font-bold tracking-[0.2em] text-brand-ink px-6 py-2 border border-brand-ink hover:bg-brand-ink hover:text-brand-offwhite transition-all"
               >
                 Acceso
@@ -128,6 +130,8 @@ export function Navbar() {
         </div>
       </div>
 
+      <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
+
       {/* Mobile Nav */}
       <AnimatePresence>
         {isOpen && (
@@ -158,7 +162,7 @@ export function Navbar() {
               
               {!user ? (
                 <button
-                  onClick={() => { signInWithGoogle(); setIsOpen(false); }}
+                  onClick={() => { setIsLoginModalOpen(true); setIsOpen(false); }}
                   className="text-[10px] uppercase tracking-[0.3em] font-sans text-left"
                 >
                   Iniciar Sesión

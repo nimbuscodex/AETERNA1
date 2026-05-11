@@ -1,1996 +1,522 @@
-import React, { useEffect, useState, isValidElement, Children } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import React, { useEffect, useState, useRef, useMemo, isValidElement } from "react";
+import { useParams, useSearchParams, useLocation, Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
 import rehypeSlug from "rehype-slug";
-import GithubSlugger from "github-slugger";
 import {
   motion,
   useScroll,
   useSpring,
   useTransform,
-  AnimatePresence,
   useMotionValueEvent,
+  AnimatePresence
 } from "motion/react";
 import {
-  ChevronRight,
-  ChevronDown,
-  Clock,
-  User,
   Share2,
   Printer,
-  Languages,
+  BrainCircuit,
+  ArrowRight,
   Lightbulb,
   AlertTriangle,
-  BrainCircuit,
-  Bookmark,
-  ArrowRightCircle,
-  HelpCircle,
-  Compass,
-  List,
-  X,
-  CheckCircle2,
+  Target,
+  Hash,
+  ChevronRight,
   Lock,
+  Sparkles,
+  Zap,
+  ArrowDown,
+  ArrowUp,
+  Activity,
   Layers,
+  ShieldCheck
 } from "lucide-react";
-import { getArticleBySlug } from "@/lib/content-loader";
-import { formatDate } from "@/lib/utils";
-import { KanaTool } from "@/components/interactive/KanaTool";
-import { KanaGameV2 } from "@/components/interactive/KanaGameV2";
-import { AeternaExamTool } from "@/components/interactive/AeternaExamTool";
-import { AeternaInteractiveQuestion } from "@/components/interactive/AeternaInteractiveQuestion";
-import { AeternaDecisionBox } from "@/components/interactive/AeternaDecisionBox";
-import AeternaTable from "@/components/AeternaTable";
-import AeternaFaq from "@/components/AeternaFaq";
+import { getStructuredArticleBySlug } from "@/lib/content-loader";
+import { formatDate, cn } from "@/lib/utils";
+import { useGamification } from "@/context/GamificationContext";
 import { AeternaPracticeProblem } from "@/components/AeternaPracticeProblem";
-import { AeternaExercise } from "@/components/AeternaExercise";
 import { AeternaAffiliate } from "@/components/AeternaAffiliate";
-import {
-  BotonConexiones,
-  BotonEjemplos,
-  BotonProfundizar,
-  BotonSimplificar,
-  AccionBotones,
+import { AeternaExercise } from "@/components/AeternaExercise";
+import { 
+  AccionBotones, 
+  BotonSimplificar, 
+  BotonProfundizar, 
+  BotonEjemplos, 
+  BotonConexiones 
 } from "@/components/interactive/AccionBotones";
-import { NivelContenido } from "@/components/interactive/NivelContenido";
-import { NivelSelector } from "@/components/interactive/NivelSelector";
-import { ProgresionArticulo } from "@/components/interactive/ProgresionArticulo";
-import { NivelActivo } from "@/components/interactive/NivelActivo";
-import { MostrarEnNivel } from "@/components/interactive/MostrarEnNivel";
-import { IndiceNivel } from "@/components/interactive/IndiceNivel";
+import AeternaTable from "@/components/AeternaTable";
+import { AeternaDecisionBox } from "@/components/interactive/AeternaDecisionBox";
+import { AeternaInteractiveQuestion } from "@/components/interactive/AeternaInteractiveQuestion";
+import { AeternaEngagement, AeternaEngagementSuite } from "@/components/AeternaEngagement";
 import { BotonTransicion } from "@/components/interactive/BotonTransicion";
 import { LevelProvider, useLevel } from "@/context/LevelContext";
-import { useGamification } from "@/context/GamificationContext";
-import type { ArticleFrontmatter } from "@/types";
-import { ROADMAPS } from "@/data/roadmaps";
+import type { AeternaArticle } from "@/types";
 
-function SidebarTOC() {
-  const [headings, setHeadings] = useState<
-    { id: string; text: string; level: number }[]
-  >([]);
-  const [activeId, setActiveId] = useState<string>("");
+import 'katex/dist/katex.min.css';
 
-  useEffect(() => {
-    // Small delay to allow ReactMarkdown to render, especially after level changes
-    const timeoutId = setTimeout(() => {
-      const elements = Array.from(
-        document.querySelectorAll(".markdown-body h2, .markdown-body h3"),
-      );
-      const newHeadings = elements
-        .map((el) => ({
-          id: el.id,
-          text: el.textContent?.replace(/▶️|❓|🧠|⚠️|📌/g, "").trim() || "",
-          level: el.tagName === "H2" ? 2 : 3,
-        }))
-        .filter(
-          (h) =>
-            h.id &&
-            h.text &&
-            !h.text.includes("Siguiente parada") &&
-            !h.text.includes("Para seguir explorando"),
-        );
-
-      setHeadings(newHeadings);
-    }, 300);
-
-    return () => clearTimeout(timeoutId);
-  }, []); // Needs a way to depend on activeLevel changing
-
-  const { activeLevel } = useLevel();
-  // We add activeLevel as a dependency to the effect by recreating it:
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      const elements = Array.from(
-        document.querySelectorAll(".markdown-body h2, .markdown-body h3"),
-      );
-      const newHeadings = elements
-        .map((el) => ({
-          id: el.id,
-          text: el.textContent?.replace(/▶️|❓|🧠|⚠️|📌/g, "").trim() || "",
-          level: el.tagName === "H2" ? 2 : 3,
-        }))
-        .filter(
-          (h) =>
-            h.id &&
-            h.text &&
-            !h.text.includes("Siguiente parada") &&
-            !h.text.includes("Para seguir explorando"),
-        );
-
-      setHeadings(newHeadings);
-    }, 400); // 400ms to ensure DOM updates and animations finish
-    return () => clearTimeout(timeoutId);
-  }, [activeLevel]);
-
-  useEffect(() => {
-    if (headings.length === 0) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        // Find all intersecting elements
-        const visibleEntries = entries.filter((e) => e.isIntersecting);
-        if (visibleEntries.length > 0) {
-          // Sort by top coordinate to find the topmost visible
-          visibleEntries.sort(
-            (a, b) => a.boundingClientRect.top - b.boundingClientRect.top,
-          );
-          setActiveId(visibleEntries[0].target.id);
-        }
-      },
-      { rootMargin: "-80px 0px -60% 0px" },
-    );
-
-    headings.forEach((h) => {
-      const el = document.getElementById(h.id);
-      if (el) observer.observe(el);
-    });
-
-    return () => observer.disconnect();
-  }, [headings]);
-
-  if (headings.length === 0) return null;
-
-  return (
-    <div className="font-serif">
-      <h4 className="text-[10px] font-medium uppercase tracking-[0.2em] text-brand-ink/50 mb-8 border-b border-brand-ink/10 pb-4">
-        {activeLevel
-          ? `Nivel: ${["principiante", "fundamentos"].includes((activeLevel || "").toLowerCase()) || activeLevel.includes("Capa 1") ? "Capa 1" : ["intermedio", "profundización"].includes((activeLevel || "").toLowerCase()) || activeLevel.includes("Capa 2") ? "Capa 2" : ["avanzado", "frontera"].includes((activeLevel || "").toLowerCase()) || activeLevel.includes("Capa 3") ? "Capa 3" : activeLevel}`
-          : "Índice del Tomo"}
-      </h4>
-      <nav className="relative">
-        <div className="absolute left-[3px] top-4 bottom-4 w-[1px] bg-brand-ink/10" />
-        <ul className="space-y-5">
-          {headings.map((heading) => (
-            <li key={heading.id} className="relative">
-              <a
-                href={`#${heading.id}`}
-                className={`block pl-6 text-[15px] transition-all duration-500 hover:text-brand-ink ${
-                  activeId === heading.id
-                    ? "text-brand-ink font-medium tracking-wide italic"
-                    : "text-brand-ink/60 font-light"
-                } ${heading.level === 3 ? "pl-10 text-sm opacity-80" : ""}`}
-              >
-                {activeId === heading.id && (
-                  <motion.div
-                    layoutId="toc-indicator"
-                    className="absolute left-[-2px] top-1/2 -translate-y-1/2 w-[9px] h-[9px] rotate-45 border border-brand-ink bg-white z-10"
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                  />
-                )}
-                {heading.text}
-              </a>
-            </li>
-          ))}
-        </ul>
-      </nav>
-    </div>
-  );
-}
-
-function MobileTOC({ isMobileTocOpen, setIsMobileTocOpen }: any) {
-  const [headings, setHeadings] = useState<
-    { id: string; text: string; level: number }[]
-  >([]);
-  const { activeLevel } = useLevel();
-
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      const elements = Array.from(
-        document.querySelectorAll(".markdown-body h2, .markdown-body h3"),
-      );
-      const newHeadings = elements
-        .map((el) => ({
-          id: el.id,
-          text: el.textContent?.replace(/▶️|❓|🧠|⚠️|📌/g, "").trim() || "",
-          level: el.tagName === "H2" ? 2 : 3,
-        }))
-        .filter(
-          (h) =>
-            h.id &&
-            h.text &&
-            !h.text.includes("Siguiente parada") &&
-            !h.text.includes("Para seguir explorando"),
-        );
-
-      setHeadings(newHeadings);
-    }, 400);
-    return () => clearTimeout(timeoutId);
-  }, [activeLevel]);
-
-  if (headings.length === 0) return null;
-
-  return (
-    <div className="space-y-6 mt-4 font-serif">
-      <div>
-        <h4 className="text-[10px] font-bold uppercase tracking-[0.3em] text-brand-gold mb-4 border-b border-brand-ink/10 pb-3">
-          {activeLevel ? `Nivel: ${activeLevel}` : "Índice del Tomo"}
-        </h4>
-        <nav className="text-sm space-y-4 font-medium">
-          {headings.map((heading) => (
-            <a
-              key={`mobile-inline-${heading.id}`}
-              href={`#${heading.id}`}
-              onClick={() => setIsMobileTocOpen(false)}
-              className={`block text-brand-muted hover:text-brand-ink transition-colors ${
-                heading.level === 3 ? "pl-4 text-xs opacity-80" : ""
-              }`}
-            >
-              {heading.text}
-            </a>
-          ))}
-        </nav>
-      </div>
-    </div>
-  );
-}
-
-function ArticleProgressBar({ articleTitle, currentStepTitle }: any) {
-  const { activeLevel } = useLevel();
-  const [headings, setHeadings] = useState<
-    { id: string; text: string; level: number }[]
-  >([]);
-  const [activeHeadingId, setActiveHeadingId] = useState<string>("");
-
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      const elements = Array.from(
-        document.querySelectorAll(".markdown-body h2"),
-      );
-      const newHeadings = elements
-        .map((el) => ({
-          id: el.id,
-          text: el.textContent?.replace(/▶️|❓|🧠|⚠️|📌/g, "").trim() || "",
-          level: 2,
-        }))
-        .filter(
-          (h) =>
-            h.id &&
-            h.text &&
-            !h.text.includes("Siguiente parada") &&
-            !h.text.includes("Para seguir explorando"),
-        );
-
-      setHeadings(newHeadings);
-      if (newHeadings.length > 0 && activeHeadingId === "") {
-        setActiveHeadingId(newHeadings[0].id);
-      }
-    }, 400);
-    return () => clearTimeout(timeoutId);
-  }, [activeLevel]);
-
-  useEffect(() => {
-    if (headings.length === 0) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setActiveHeadingId(entry.target.id);
-          }
-        });
-      },
-      { rootMargin: "-80px 0px -40% 0px" },
-    );
-
-    headings.forEach((h) => {
-      const el = document.getElementById(h.id);
-      if (el) observer.observe(el);
-    });
-
-    return () => observer.disconnect();
-  }, [headings]);
-
-  if (headings.length === 0) return null;
-
-  return (
-    <div className="w-full mx-auto mb-20 mt-8 font-sans no-print px-0 sticky top-[60px] z-40 bg-white/95 backdrop-blur-md pt-4 pb-4 border-b border-brand-ink/10">
-      <div className="flex justify-between items-center mb-4 px-2">
-        <span className="text-[9px] font-medium tracking-[0.3em] uppercase text-brand-ink/60 truncate pr-4">
-          Tomo:{" "}
-          <span className="text-brand-ink">
-            {currentStepTitle || articleTitle}
-          </span>{" "}
-          {activeLevel
-            ? `— Nivel: ${["principiante", "fundamentos"].includes((activeLevel || "").toLowerCase()) || activeLevel.includes("Capa 1") ? "Capa 1" : ["intermedio", "profundización"].includes((activeLevel || "").toLowerCase()) || activeLevel.includes("Capa 2") ? "Capa 2" : ["avanzado", "frontera"].includes((activeLevel || "").toLowerCase()) || activeLevel.includes("Capa 3") ? "Capa 3" : activeLevel}`
-            : ""}
-        </span>
-        <span className="text-[10px] font-sans tracking-[0.1em] text-brand-ink/40 uppercase shrink-0 italic">
-          <span className="text-brand-ink">
-            {Math.max(
-              1,
-              headings.findIndex((h) => h.id === activeHeadingId) + 1,
-            )}
-          </span>{" "}
-          / {headings.length}
-        </span>
-      </div>
-
-      <div className="relative flex items-center h-4 py-2 px-2">
-        <div className="absolute left-2 right-2 h-[1px] bg-brand-ink/10 z-0"></div>
-        <div
-          className="absolute left-2 h-[1px] bg-brand-gold z-0 transition-all duration-500"
-          style={{
-            width: `calc(${
-              headings.length > 1
-                ? (Math.max(
-                    0,
-                    headings.findIndex((h) => h.id === activeHeadingId),
-                  ) /
-                    (headings.length - 1)) *
-                  100
-                : 0
-            }% - 4px)`,
-          }}
-        ></div>
-        <div className="absolute left-2 right-2 flex justify-between z-10 w-[calc(100%-16px)]">
-          {headings.map((heading, idx) => {
-            const activeIdx = headings.findIndex(
-              (h) => h.id === activeHeadingId,
-            );
-            const isCurrent = idx === activeIdx;
-            const isPast = idx < activeIdx;
-
-            if (isCurrent) {
-              return (
-                <div
-                  key={heading.id}
-                  className="relative flex items-center justify-center w-3 h-3"
-                >
-                  <div className="absolute inset-0 bg-brand-gold rounded-full blur-[2px] opacity-40"></div>
-                  <div className="relative w-2.5 h-2.5 bg-white border-[2px] border-brand-gold rounded-full transition-all duration-300 scale-125"></div>
-                </div>
-              );
-            } else if (isPast) {
-              return (
-                <div
-                  key={heading.id}
-                  className="w-2.5 h-2.5 rounded-full bg-brand-gold border-[2px] border-brand-gold transition-colors duration-500"
-                ></div>
-              );
-            } else {
-              return (
-                <div
-                  key={heading.id}
-                  className="w-2.5 h-2.5 rounded-full border-[1.5px] border-brand-ink/20 bg-white transition-colors"
-                ></div>
-              );
-            }
-          })}
-        </div>
-      </div>
-      <div className="text-center mt-4">
-        <span className="font-serif text-[11px] tracking-wide text-brand-ink/70 italic transition-all duration-300">
-          {headings.find((h) => h.id === activeHeadingId)?.text ||
-            headings[0]?.text}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-const ARTICLE_QUESTIONS: Record<string, any[]> = {
-  "mecanica-clasica": [
-    {
-      id: "mc1",
-      question: "¿Qué describe la cinemática en la mecánica clásica?",
-      options: [
-        "Las causas del movimiento",
-        "El lenguaje matemático del universo (cómo se mueve algo sin buscar sus causas)",
-        "La cantidad de energía",
-        "El momento angular",
-      ],
-      correctOption: 1,
-    },
-    {
-      id: "mc2",
-      question:
-        "Según la cinemática, ¿qué diferencia a la velocidad de la aceleración?",
-      options: [
-        "Miden lo mismo, pero en distintas unidades",
-        "La velocidad es escalar, la aceleración es vector",
-        "La velocidad describe el cambio de posición, la aceleración el cambio de velocidad",
-        "Ambas causan el movimiento",
-      ],
-      correctOption: 2,
-    },
-    {
-      id: "mc3",
-      question: "¿Cuál es la primera ley de Newton?",
-      options: [
-        "Acción y reacción",
-        "F = m · a",
-        "Ley de la Inercia (todo cuerpo persevera en su estado hasta que una fuerza lo cambie)",
-        "Principio de Arquímedes",
-      ],
-      correctOption: 2,
-    },
-    {
-      id: "mc4",
-      question:
-        "En la ecuación de la segunda ley de Newton (F = m · a), la masa representa:",
-      options: [
-        "El volumen del objeto",
-        "El peso del objeto en la Tierra",
-        "La resistencia al cambio de movimiento (inercia)",
-        "La cantidad de energía almacenada",
-      ],
-      correctOption: 2,
-    },
-    {
-      id: "mc5",
-      question:
-        "¿Por qué funcionan los cohetes espaciales en el vacío, según la Tercera Ley de Newton?",
-      options: [
-        "Porque no hay rozamiento en el espacio",
-        "Porque expulsan gases hacia abajo (acción) y reciben un empuje hacia arriba (reacción)",
-        "Por la conservación de la energía mecánica",
-        "Por la inercia de la nave",
-      ],
-      correctOption: 1,
-    },
-    {
-      id: "mc6",
-      question:
-        "La energía cinética depende principalmente de dos factores. ¿Cuáles son?",
-      options: [
-        "La masa y la altura",
-        "La fuerza y la distancia",
-        "La masa y la velocidad al cuadrado",
-        "La presión y el área",
-      ],
-      correctOption: 2,
-    },
-    {
-      id: "mc7",
-      question:
-        "¿Qué afirma el Principio de Pascal aplicado a fluidos incompresibles?",
-      options: [
-        "Que todo cuerpo flota si su peso es menor",
-        "Que la presión cambia dependiendo de la altura",
-        "Un cambio de presión se transmite íntegramente a todos los puntos del fluido",
-        "Que los líquidos no tienen fuerzas",
-      ],
-      correctOption: 2,
-    },
-    {
-      id: "mc8",
-      question: "¿Por qué flota un barco de acero según Arquímedes?",
-      options: [
-        "Porque su diseño es aerodinámico",
-        "Porque el casco desplaza un volumen de agua que pesa más que el navío entero",
-        "Porque tiene aire atrapado que carece de masa",
-        "Porque la tensión superficial del mar es constante",
-      ],
-      correctOption: 1,
-    },
-    {
-      id: "mc9",
-      question:
-        "Al retraer los brazos, una patinadora aumenta su velocidad de giro debido a:",
-      options: [
-        "La conservación de la energía potencial",
-        "La tercera ley de Newton",
-        "La conservación del momento angular",
-        "Una reducción de la fricción del hielo",
-      ],
-      correctOption: 2,
-    },
-    {
-      id: "mc10",
-      question:
-        "¿En qué situación NO falla la mecánica clásica, por lo que sigue siendo un modelo excelente?",
-      options: [
-        "Velocidades cercanas a las de la luz",
-        "El mundo cuántico subatómico",
-        "Campos gravitatorios extremos, como un agujero negro",
-        "Nuestro mundo cotidiano y experiencias a escala humana",
-      ],
-      correctOption: 3,
-    },
-  ],
-};
-
-// Helper to extract text from React children
+// --- CONFIGURACIÓN DE ESTILOS ---
 const extractText = (node: any): string => {
   if (typeof node === "string") return node;
   if (typeof node === "number") return String(node);
-  if (isValidElement<{ children?: any }>(node)) {
-    return extractText(node.props.children);
-  }
-  if (Array.isArray(node)) {
-    return node.map(extractText).join("");
-  }
+  if (isValidElement<{ children?: any }>(node)) return extractText(node.props.children);
+  if (Array.isArray(node)) return node.map(extractText).join("");
   return "";
 };
 
 const markdownComponents: any = {
-  h1: ({ children, ...props }: any) => (
-    <h1
-      className="font-serif text-[2.5rem] md:text-[4rem] lg:text-[5rem] font-normal text-brand-ink leading-[1.05] tracking-[-0.02em] mt-24 mb-12"
-      {...props}
-    >
-      {children}
-    </h1>
-  ),
-  h2: ({ children, ...props }: any) => (
-    <h2
-      className="font-serif text-[2.25rem] md:text-[3rem] font-normal text-brand-ink leading-[1.2] tracking-tight mt-24 mb-10 pb-4 border-b border-brand-ink/10 relative"
-      {...props}
-    >
-      <span className="absolute -bottom-[1px] left-0 w-24 h-[1px] bg-brand-gold"></span>
-      {children}
+  p: ({ children }: any) => <p className="mb-10 text-[1.15rem] md:text-[21px] leading-[1.85] text-[#3E2C23] font-serif font-light tracking-tight text-justify">{children}</p>,
+  h2: ({ children, id }: any) => (
+    <h2 id={id} className="font-serif text-3xl md:text-5xl lg:text-7xl text-[#1A1A1A] mt-40 mb-16 tracking-tighter uppercase leading-[0.95] scroll-mt-32 relative">
+       <span className="absolute -left-12 top-4 text-[#D4AF37]/20 font-mono text-xl hidden lg:block italic">A/</span>
+       {children}
     </h2>
   ),
-  h3: ({ children, ...props }: any) => (
-    <h3
-      className="font-sans text-[11px] md:text-xs font-bold tracking-[0.25em] text-brand-ink uppercase mt-20 mb-8 flex items-center gap-4"
-      {...props}
-    >
-      <div className="w-12 h-[1px] bg-brand-ink/40" />
-      {children}
-    </h3>
-  ),
-  p: ({ children, ...props }: any) => (
-    <p
-      className="font-body text-[1.1875rem] md:text-[1.3125rem] lg:text-[1.4375rem] text-brand-ink/85 leading-[1.8] md:leading-[1.9] mb-10 font-normal"
-      {...props}
-    >
-      {children}
-    </p>
-  ),
-  ul: ({ children, ...props }: any) => (
-    <ul className="list-none space-y-6 my-12" {...props}>
-      {children}
-    </ul>
-  ),
-  li: ({ children, ...props }: any) => (
-    <li
-      className="font-body text-[1.1875rem] md:text-[1.3125rem] lg:text-[1.4375rem] text-brand-ink/85 leading-[1.8] md:leading-[1.9] font-normal flex items-start group"
-      {...props}
-    >
-      <span className="text-brand-gold/60 mr-5 mt-2 font-sans text-[9px] group-hover:text-brand-gold transition-colors duration-300">
-        ◆
-      </span>
-      <span className="flex-1">{children}</span>
-    </li>
-  ),
-  a: ({ children, ...props }: any) => (
-    <a
-      className="text-brand-ink font-medium border-b border-brand-ink/20 hover:border-brand-gold hover:text-brand-gold transition-all duration-300 pb-[1px]"
-      {...props}
-    >
-      {children}
-    </a>
-  ),
-  blockquote({ children, className, ...props }: any) {
+  h3: ({ children }: any) => <h3 className="font-serif text-2xl md:text-3xl text-[#8B6914] mt-24 mb-10 tracking-widest uppercase italic">{children}</h3>,
+  blockquote({ children }: any) {
     const text = extractText(children);
-
-    // 🔗 Siguiente paso
-    if (
-      text.includes("🔗") ||
-      text.includes("Siguiente paso") ||
-      text.includes("Próximo paso")
-    ) {
-      return (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-50px" }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          whileHover={{ y: -8 }}
-          className="my-16 md:my-20 p-8 sm:p-12 rounded-none bg-[#FAFAFA] border-t border-b border-brand-ink flex flex-col sm:flex-row gap-8 items-start transition-all duration-300 group"
-        >
-          <div className="flex-shrink-0 text-brand-ink">
-            <Compass className="w-8 h-8" strokeWidth={1} />
-          </div>
-          <div
-            className="flex-1 prose-p:!mt-0 prose-p:!mb-4 prose-p:!text-brand-ink/80 last:prose-p:!mb-0 text-brand-ink/80 font-body text-[1.1875rem] leading-[1.8]
-            [&>*:first-child]:!text-brand-ink [&>*:first-child]:!font-sans [&>*:first-child]:!tracking-[0.2em] [&>*:first-child]:!uppercase [&>*:first-child]:!text-[10px] [&>*:first-child]:mb-6
-            [&>*:first-child_strong]:!text-brand-ink [&>*:first-child_strong]:!font-sans [&>*:first-child_strong]:!tracking-[0.2em] [&>*:first-child_strong]:!text-[10px]
-            [&_strong]:!text-brand-ink [&_strong]:!font-bold [&_a]:!font-medium [&_a]:!text-brand-gold hover:[&_a]:!text-brand-gold"
-          >
-            {children}
-          </div>
-        </motion.div>
-      );
-    }
-
-    // 💡 Idea clave
-    if (text.includes("💡")) {
-      return (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-50px" }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          className="my-16 relative py-12 px-8 md:px-16"
-        >
-          <div className="absolute top-0 bottom-0 left-0 w-[2px] bg-brand-gold" />
-          <div className="absolute top-0 bottom-0 left-2 w-[1px] bg-brand-gold/30" />
-          <div className="relative z-10 w-full">
-            <div
-              className="prose-p:!mt-0 prose-p:!mb-4 prose-p:!text-brand-ink last:prose-p:!mb-0 text-brand-ink font-serif font-normal text-[1.5rem] md:text-[1.75rem] leading-[1.5] tracking-[-0.01em]
-              [&>*:first-child]:!text-brand-gold [&>*:first-child]:!font-sans [&>*:first-child]:!font-bold [&>*:first-child]:!text-[10px] [&>*:first-child]:tracking-[0.3em] [&>*:first-child]:uppercase [&>*:first-child]:mb-8 [&>*:first-child]:block
-              [&>*:first-child_strong]:!text-brand-gold [&>*:first-child_strong]:!font-bold"
-            >
-              {children}
-            </div>
-          </div>
-        </motion.div>
-      );
-    }
-
-    // ⚠️ Error común
-    if (text.includes("⚠️")) {
-      return (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-50px" }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          className="my-16 overflow-hidden bg-brand-ink text-white relative group flex items-center"
-        >
-          <div className="p-10 sm:p-12 md:p-16 relative z-10 w-full border-t border-b border-brand-ink">
-            <div
-              className="prose-p:!mt-0 prose-p:!mb-4 prose-p:!text-white/90 last:prose-p:!mb-0 text-white/90 font-body text-[1.1875rem] leading-[1.8]
-              [&>*:first-child]:!text-red-400 [&>*:first-child]:!font-sans [&>*:first-child]:!tracking-[0.2em] [&>*:first-child]:!uppercase [&>*:first-child]:!text-[10px] [&>*:first-child]:mb-6 [&>*:first-child]:block
-              [&_strong]:!text-white"
-            >
-              {children}
-            </div>
-          </div>
-        </motion.div>
-      );
-    }
-
-    // 🧠 Sistema Aeterna
-    if (text.includes("🧠")) {
-      return (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-50px" }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          className="my-16 bg-[#FAFAFA] border border-brand-ink/10 relative p-10 md:p-16"
-        >
-          <div className="absolute top-0 right-0 p-6 opacity-10">
-            <BrainCircuit className="w-24 h-24 text-brand-ink" />
-          </div>
-          <div className="relative z-10 w-full">
-            <div
-              className="prose-p:!mt-0 prose-p:!mb-4 prose-p:!text-brand-ink/90 last:prose-p:!mb-0 text-brand-ink/90 font-body text-[1.1875rem] leading-[1.8]
-              [&>*:first-child]:!text-brand-gold [&>*:first-child]:!font-serif [&>*:first-child]:!text-[1.75rem] [&>*:first-child]:!italic [&>*:first-child]:mb-6 [&>*:first-child]:block
-              [&>*:first-child_strong]:!text-brand-gold [&>*:first-child_strong]:!font-serif
-              [&_strong]:!text-brand-ink"
-            >
-              {children}
-            </div>
-          </div>
-        </motion.div>
-      );
-    }
-
-    // 📌 Resumen
-    if (text.includes("📌")) {
-      return (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-50px" }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          className="my-16 overflow-hidden bg-brand-ink relative p-10 md:p-16"
-        >
-          <div className="relative z-10 w-full max-w-3xl mx-auto text-center">
-            <div
-              className="prose-p:!mt-0 prose-p:!mb-4 prose-p:!text-white/90 last:prose-p:!mb-0 text-white/90 font-body text-[1.1875rem] md:text-[1.3125rem] leading-[1.8]
-              [&>*:first-child]:!text-brand-gold [&>*:first-child]:!font-sans [&>*:first-child]:!tracking-[0.3em] [&>*:first-child]:uppercase [&>*:first-child]:!text-[10px] [&>*:first-child]:mb-8 [&>*:first-child]:block
-              [&>*:first-child_strong]:!text-brand-gold [&>*:first-child_strong]:!font-sans [&>*:first-child_strong]:uppercase"
-            >
-              {children}
-            </div>
-          </div>
-        </motion.div>
-      );
-    }
-
-    // ❓ Pregunta
-    if (text.includes("❓") || text.includes("Pregunta")) {
-      const contentElements = React.Children.toArray(children);
-      const titleElement = contentElements[0];
-
-      const faqItemsData: {
-        question: React.ReactNode;
-        answer: React.ReactNode[];
-      }[] = [];
-      contentElements.slice(1).forEach((child) => {
-        if (!React.isValidElement(child)) return;
-
-        const pChildren = React.Children.toArray((child.props as any).children);
-        const questionIndex = pChildren.findIndex(
-          (c) => React.isValidElement(c) && (c as any).type === "strong",
-        );
-
-        if (questionIndex === -1) {
-          if (faqItemsData.length > 0) {
-            faqItemsData[faqItemsData.length - 1].answer.push(child);
-          }
-          return;
-        }
-
-        const question = pChildren[questionIndex];
-        const answer = pChildren.slice(questionIndex + 1);
-        const beforeQuestion = pChildren.slice(0, questionIndex);
-
-        faqItemsData.push({
-          question: (
-            <>
-              {beforeQuestion}
-              {question}
-            </>
-          ),
-          answer: [<div key={`ans-${faqItemsData.length}`}>{answer}</div>],
-        });
-      });
-
-      return (
-        <div className="my-16">
-          <AeternaFaq
-            title={titleElement}
-            items={faqItemsData.map((item) => ({
-              ...item,
-              answer: (
-                <div className="space-y-4 font-serif text-lg leading-relaxed text-brand-ink/80">
-                  {item.answer}
-                </div>
-              ),
-            }))}
-          />
-        </div>
-      );
-    }
-
-    // Default blockquote
-    return (
-      <blockquote className="my-16 md:my-24 relative" {...props}>
-        <div className="absolute top-0 bottom-0 left-0 w-[1px] bg-brand-gold/40" />
-        <div className="pl-10 md:pl-16 pr-4 py-4">
-          <div className="font-serif text-[1.75rem] md:text-[2.25rem] leading-[1.3] text-brand-ink/90 font-normal italic">
-            {children}
-          </div>
-        </div>
-      </blockquote>
+    if (text.includes("💡") || text.includes("Idea clave")) return (
+      <div className="my-20 relative py-14 px-10 md:px-20 bg-[#D4AF37]/5 border-l-4 border-[#D4AF37] rounded-r-[2rem] shadow-sm">
+        <div className="absolute top-8 left-10 opacity-20"><Lightbulb className="w-10 h-10 text-[#8B6914]" /></div>
+        <div className="relative z-10 font-serif italic text-2xl md:text-3xl text-[#1A1A1A] leading-relaxed pl-6">{children}</div>
+      </div>
     );
-  },
-  pre({ children, ...props }: any) {
-    const childArray = React.Children.toArray(children);
-    if (childArray.length === 1 && React.isValidElement(childArray[0])) {
-      const child: any = childArray[0];
-      if (
-        child.type === "code" ||
-        (typeof child.type === "function" && child.type.name === "code")
-      ) {
-        const childProps = child.props as any;
-        const match = /language-([\w-]+)/.exec(childProps.className || "");
-        if (
-          match &&
-          (match[1] === "aeterna-question" ||
-            match[1] === "aeterna-decision" ||
-            match[1] === "aeterna-equation" ||
-            match[1] === "interactive-kana" ||
-            match[1] === "interactive-kana-v2" ||
-            match[1] === "aeterna-practice" ||
-            match[1] === "aeterna-exercise" ||
-            match[1] === "aeterna-resueltos" ||
-            match[1] === "aeterna-resuelto" ||
-            match[1] === "aeterna-affiliate" ||
-            match[1] === "aeterna-boton" ||
-            match[1] === "aeterna-accion-botones" ||
-            match[1] === "aeterna-nivel-contenido" ||
-            match[1] === "aeterna-nivel-selector" ||
-            match[1] === "aeterna-progresion-articulo" ||
-            match[1] === "aeterna-nivel-activo" ||
-            match[1] === "aeterna-indice-nivel" ||
-            match[1] === "aeterna-boton-transicion" ||
-            match[1] === "aeterna-mostrar-en-nivel")
-        ) {
-          return <>{children}</>;
-        }
-      }
-    }
-    return (
-      <pre
-        className="bg-brand-ink text-brand-offwhite rounded-none p-8 overflow-x-auto my-12 border-l-4 border-brand-gold"
-        {...props}
-      >
-        {children}
-      </pre>
+    if (text.includes("🧠") || text.includes("Sistema Aeterna")) return (
+      <div className="my-24 bg-black/[0.02] border border-[#d4af37]/30 p-12 md:p-20 relative overflow-hidden group rounded-[3rem] shadow-xl">
+        <div className="absolute -top-10 -right-10 opacity-[0.03] group-hover:opacity-10 transition-opacity duration-1000"><BrainCircuit className="w-64 h-64 text-[#8B6914]" /></div>
+        <div className="relative z-10 font-serif text-3xl text-[#1A1A1A] italic leading-snug mb-10">{children}</div>
+        <div className="text-[10px] font-mono font-black tracking-[0.5em] text-[#8B6914] uppercase flex items-center gap-4">
+           <div className="w-8 h-px bg-[#8B6914]/30" /> Integridad Cognitiva Verificada
+        </div>
+      </div>
     );
+    return <blockquote className="my-20 md:my-32 relative border-l-2 border-[#D4AF37] bg-[#FDFBF7] p-12 italic text-[#3E2C23]/80 font-serif text-2xl md:text-4xl leading-relaxed shadow-inner rounded-r-[2rem]">{children}</blockquote>;
   },
-  code({ className, children, ...props }: any) {
+  ul: ({ children }: any) => <ul className="mb-14 space-y-6 text-[1.15rem] md:text-[22px] text-[#3E2C23] font-serif font-light tracking-tight pl-12 list-none marker:text-[#D4AF37]">{children}</ul>,
+  li: ({ children }: any) => <li className="relative pl-8 before:content-['◆'] before:absolute before:left-0 before:text-[#D4AF37]/40 before:text-xs before:top-2">{children}</li>,
+  table: ({ children }: any) => <AeternaTable>{children}</AeternaTable>,
+  code: ({ className, children }: any) => {
     const match = /language-([\w-]+)/.exec(className || "");
-    const textContent = extractText(children);
-    if (match && match[1] === "aeterna-question") {
-      return <AeternaInteractiveQuestion content={textContent} />;
-    }
-    if (match && match[1] === "aeterna-decision") {
-      return <AeternaDecisionBox content={textContent} />;
-    }
-    if (match && match[1] === "aeterna-equation") {
-      return (
-        <div className="my-16 mx-auto max-w-3xl relative group">
-          <div className="absolute -inset-[1px] bg-gradient-to-r from-transparent via-brand-gold/30 to-transparent blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
-
-          <div className="bg-[#020202] border border-brand-gold/20 rounded-xl p-10 md:p-14 flex flex-col items-center justify-center relative overflow-hidden shadow-2xl">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(212,175,55,0.06)_0%,transparent_60%)] group-hover:bg-[radial-gradient(circle_at_center,rgba(212,175,55,0.12)_0%,transparent_70%)] transition-all duration-1000" />
-
-            {/* Decorative corners */}
-            <div className="absolute top-0 left-0 w-12 h-12 border-t border-l border-brand-gold/30 rounded-tl-xl transition-all duration-700 group-hover:w-20 group-hover:h-20 group-hover:border-brand-gold/60" />
-            <div className="absolute top-0 right-0 w-12 h-12 border-t border-r border-brand-gold/30 rounded-tr-xl transition-all duration-700 group-hover:w-20 group-hover:h-20 group-hover:border-brand-gold/60" />
-            <div className="absolute bottom-0 left-0 w-12 h-12 border-b border-l border-brand-gold/30 rounded-bl-xl transition-all duration-700 group-hover:w-20 group-hover:h-20 group-hover:border-brand-gold/60" />
-            <div className="absolute bottom-0 right-0 w-12 h-12 border-b border-r border-brand-gold/30 rounded-br-xl transition-all duration-700 group-hover:w-20 group-hover:h-20 group-hover:border-brand-gold/60" />
-
-            <div className="font-['Cinzel',serif] text-3xl md:text-4xl lg:text-5xl text-[#FCE69B] [text-shadow:0_0_15px_rgba(252,230,155,0.6)] tracking-[0.05em] text-center relative z-10 transition-transform duration-700 group-hover:scale-[1.02] leading-relaxed">
-              {textContent.split("\n").map((line, i) => (
-                <div key={i} className="my-5 tracking-wider">
-                  {line}
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-10 mb-[-10px] flex items-center gap-6 w-full justify-center relative z-10 opacity-70 group-hover:opacity-100 transition-opacity duration-700">
-              <div className="h-px bg-gradient-to-r from-transparent to-brand-gold/50 flex-1 max-w-[80px]" />
-              <div className="w-1.5 h-1.5 rotate-45 border border-brand-gold" />
-              <div className="font-serif italic text-[10px] text-brand-gold/80 tracking-[0.3em] uppercase">
-                Fórmula Aeterna
-              </div>
-              <div className="w-1.5 h-1.5 rotate-45 border border-brand-gold" />
-              <div className="h-px bg-gradient-to-l from-transparent to-brand-gold/50 flex-1 max-w-[80px]" />
-            </div>
-          </div>
+    const textContent = String(children).replace(/\n$/, "");
+    if (match) {
+      const type = match[1];
+      if (type === "aeterna-practice" || type === "aeterna-resueltos") return <AeternaPracticeProblem content={textContent} />;
+      if (type === "aeterna-exercise") return <AeternaExercise content={textContent} />;
+      if (type === "aeterna-affiliate") return <AeternaAffiliate content={textContent} />;
+      if (type === "aeterna-question") return <AeternaInteractiveQuestion content={textContent} />;
+      if (type === "aeterna-decision") return <AeternaDecisionBox content={textContent} />;
+      if (type === "aeterna-engagement") {
+        const parts = textContent.split('|').map(p => p.trim());
+        return <AeternaEngagement type={parts[0] as any} title={parts[1]} content={parts[2]} extra={parts[3]} />;
+      }
+      if (type === "aeterna-equation") return (
+        <div className="my-20 bg-white border border-[#D4AF37]/30 p-16 text-center rounded-[3rem] shadow-2xl relative group overflow-hidden">
+           <div className="absolute inset-0 bg-gradient-to-b from-[#D4AF37]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+           <div className="font-mono text-3xl md:text-5xl text-[#1A1A1A] relative z-10 tracking-tighter">{textContent}</div>
+           <div className="mt-10 text-[10px] font-mono font-black tracking-[0.4em] text-[#8B6914]/60 uppercase">Formulación Axiomática Universal</div>
         </div>
       );
     }
-    if (match && match[1] === "interactive-kana") {
-      return <KanaTool />;
-    }
-    if (match && match[1] === "interactive-kana-v2") {
-      return <KanaGameV2 />;
-    }
-    if (
-      match &&
-      (match[1] === "aeterna-practice" ||
-        match[1] === "aeterna-resueltos" ||
-        match[1] === "aeterna-resuelto")
-    ) {
-      return <AeternaPracticeProblem content={textContent} />;
-    }
-    if (match && match[1] === "aeterna-exercise") {
-      return <AeternaExercise content={textContent} />;
-    }
-    if (match && match[1] === "aeterna-boton") {
-      try {
-        const data = JSON.parse(decodeURIComponent(atob(textContent)));
-        const Component =
-          data.type === "BotonSimplificar"
-            ? BotonSimplificar
-            : data.type === "BotonProfundizar"
-              ? BotonProfundizar
-              : data.type === "BotonEjemplos"
-                ? BotonEjemplos
-                : data.type === "BotonConexiones"
-                  ? BotonConexiones
-                  : BotonSimplificar;
-        return (
-          <Component>
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              rehypePlugins={[rehypeSlug]}
-              components={markdownComponents}
-            >
-              {data.content}
-            </ReactMarkdown>
-          </Component>
-        );
-      } catch (e) {
-        return <div className="text-red-500">Error rendering button</div>;
-      }
-    }
-    if (match && match[1] === "aeterna-accion-botones") {
-      return (
-        <AccionBotones>
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            rehypePlugins={[rehypeSlug]}
-            components={markdownComponents}
-          >
-            {decodeURIComponent(atob(textContent))}
-          </ReactMarkdown>
-        </AccionBotones>
-      );
-    }
-    if (match && match[1] === "aeterna-nivel-contenido") {
-      try {
-        const levels = JSON.parse(decodeURIComponent(atob(textContent)));
-        return (
-          <NivelContenido
-            principiante={
-              levels.principiante ? (
-                <div className="markdown-body">
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    rehypePlugins={[rehypeSlug]}
-                    components={markdownComponents}
-                  >
-                    {levels.principiante}
-                  </ReactMarkdown>
-                </div>
-              ) : undefined
-            }
-            intermedio={
-              levels.intermedio ? (
-                <div className="markdown-body">
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    rehypePlugins={[rehypeSlug]}
-                    components={markdownComponents}
-                  >
-                    {levels.intermedio}
-                  </ReactMarkdown>
-                </div>
-              ) : undefined
-            }
-            avanzado={
-              levels.avanzado ? (
-                <div className="markdown-body">
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    rehypePlugins={[rehypeSlug]}
-                    components={markdownComponents}
-                  >
-                    {levels.avanzado}
-                  </ReactMarkdown>
-                </div>
-              ) : undefined
-            }
-          />
-        );
-      } catch (e) {
-        return (
-          <div className="text-red-500">Error rendering content level</div>
-        );
-      }
-    }
-    if (match && match[1] === "aeterna-nivel-selector") {
-      try {
-        const props = JSON.parse(decodeURIComponent(atob(textContent)));
-        return (
-          <NivelSelector
-            niveles={props.niveles}
-            nivelPorDefecto={props.nivelPorDefecto}
-          />
-        );
-      } catch (e) {
-        return (
-          <LevelProvider>
-            <NivelSelector />
-          </LevelProvider>
-        );
-      }
-    }
-    if (match && match[1] === "aeterna-affiliate") {
-      return <AeternaAffiliate content={textContent} />;
-    }
-    return (
-      <code className={className} {...props}>
-        {children}
-      </code>
-    );
-  },
-  table({ children, ...props }: any) {
-    return <AeternaTable>{children}</AeternaTable>;
-  },
-  thead({ children, ...props }: any) {
-    return <thead {...props}>{children}</thead>;
-  },
-  tbody({ children, ...props }: any) {
-    return <tbody {...props}>{children}</tbody>;
-  },
-  tr({ children, ...props }: any) {
-    return <tr {...props}>{children}</tr>;
-  },
-  th({ children, ...props }: any) {
-    return <th {...props}>{children}</th>;
-  },
-  td({ children, ...props }: any) {
-    return <td {...props}>{children}</td>;
-  },
+    return <code className="bg-[#8B6914]/5 text-[#8B6914] px-2 py-1 font-mono text-sm rounded-sm border border-[#8B6914]/10">{children}</code>;
+  }
 };
 
-export function ArticlePage({ overrideSlug }: { overrideSlug?: string }) {
-  const params = useParams<{
-    category?: string;
-    subcategory?: string;
-    slug?: string;
-  }>();
-  const category = params.category;
-  const subcategory = params.subcategory;
-  const slug = overrideSlug || params.slug;
-  const navigate = useNavigate();
-  const { activeLevel, setActiveLevel } = useLevel();
-  const [article, setArticle] = useState<{
-    data: ArticleFrontmatter;
-    content: string;
-  } | null>(null);
+// --- COMPONENTES DE APOYO ---
+
+function FloatingLevelLabel({ level }: { level: string }) {
+  const levelNames: Record<string, string> = {
+    principiante: "Capa I: Iniciación",
+    intermedio: "Capa II: Exégesis",
+    avanzado: "Capa III: Frontera"
+  };
+
+  return (
+    <motion.div 
+      initial={{ x: 100, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      className="fixed bottom-12 right-12 z-50 pointer-events-none"
+    >
+      <div className="bg-[#1A1A1A] text-[#D4AF37] px-8 py-5 rounded-full border border-[#D4AF37]/30 shadow-2xl backdrop-blur-xl flex items-center gap-5">
+         <div className="w-2.5 h-2.5 rounded-full bg-[#D4AF37] animate-pulse shadow-[0_0_10px_#D4AF37]" />
+         <span className="text-[11px] font-mono font-black uppercase tracking-[0.5em]">{levelNames[level] || level}</span>
+      </div>
+    </motion.div>
+  );
+}
+
+function SidebarTOC({ sections, activeId, currentLevel }: { sections: any[], activeId: string, currentLevel: string }) {
+  if (sections.length === 0) return null;
+  return (
+    <aside className="hidden xl:block w-80 shrink-0">
+      <div className="sticky top-48 space-y-16">
+        <div className="relative pl-8 border-l border-black/5">
+          <div className="text-[11px] font-mono font-black uppercase tracking-[0.6em] text-[#8B6914]/50 mb-10 flex items-center gap-3">
+             <Hash size={14} className="text-[#D4AF37]" /> HITOS DE LA CAPA {currentLevel === 'principiante' ? 'I' : currentLevel === 'intermedio' ? 'II' : 'III'}
+          </div>
+          <nav className="space-y-10">
+            {sections.map((s, idx) => {
+              // Priority for level-specific titles if they exist
+              const sectionTitle = typeof s.titulo === 'object' 
+                ? (s.titulo[currentLevel] || s.titulo['principiante'] || s.id)
+                : s.titulo;
+
+              return (
+                <a key={s.id} href={`#${s.id}`} className={cn("group block transition-all duration-700", activeId === s.id && "translate-x-4")}>
+                  <div className="flex items-start gap-5">
+                     <span className={cn("text-[11px] font-mono font-black transition-all duration-700", activeId === s.id ? "text-[#D4AF37] scale-125" : "text-black/10")}>{String(idx + 1).padStart(2, '0')}</span>
+                     <span className={cn("text-[14px] tracking-widest leading-tight uppercase transition-all duration-700", activeId === s.id ? "text-black font-black" : "text-black/30 group-hover:text-black/60")}>{(sectionTitle || '').replace(/▶️|🧠|❓/g, '').trim()}</span>
+                  </div>
+                  {activeId === s.id && (
+                    <motion.div layoutId="toc-line" className="w-12 h-0.5 bg-[#D4AF37] mt-3" />
+                  )}
+                </a>
+              );
+            })}
+          </nav>
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+function MasteryCommandCenter({ currentLevel, onChangeLevel, progress, xpGained, availableLevels }: any) {
+  const levels = [
+    { id: 'principiante', label: 'Capa I: Iniciación', color: 'bg-emerald-500' }, 
+    { id: 'intermedio', label: 'Capa II: Exégesis', color: 'bg-blue-500' }, 
+    { id: 'avanzado', label: 'Capa III: Frontera', color: 'bg-[#D4AF37]' }
+  ];
+  
+  return (
+    <div className="sticky top-0 z-[100] w-full bg-[#0D0D0F] text-white shadow-[0_20px_50px_rgba(0,0,0,0.3)] overflow-hidden border-b border-white/5">
+      <div className="mx-auto max-w-[1600px] px-10 py-5 flex items-center justify-between gap-16">
+         <div className="flex items-center gap-6 min-w-[200px]">
+            <div className={cn("w-3 h-3 rounded-full shadow-[0_0_10px_currentColor]", levels.find(l => l.id === currentLevel)?.color.replace('bg-', 'text-') || "text-[#D4AF37]")} />
+            <span className="text-[11px] font-mono font-black uppercase tracking-[0.6em] text-white/90">{currentLevel}</span>
+         </div>
+         <div className="flex-1 h-1 bg-white/5 rounded-full relative overflow-hidden">
+            <motion.div 
+              className={cn("absolute inset-y-0 left-0 rounded-full", levels.find(l => l.id === currentLevel)?.color || "bg-[#D4AF37]")} 
+              initial={{ width: 0 }} 
+              animate={{ width: `${progress}%` }} 
+              transition={{ duration: 1, ease: [0.23, 1, 0.32, 1] }} 
+            />
+         </div>
+         <div className="bg-white/5 border border-white/10 px-6 py-2 rounded-full flex items-center gap-4 group hover:bg-white/10 transition-colors">
+            <Activity className="w-4 h-4 text-[#D4AF37] animate-pulse" />
+            <span className="text-xs font-mono font-black text-[#D4AF37] tracking-tighter">+{xpGained} XP</span>
+         </div>
+      </div>
+      <div className="bg-black/40">
+        <div className="mx-auto max-w-[1600px] px-10 flex">
+          {levels.map((level) => {
+            const isActive = currentLevel === level.id;
+            const isAvailable = availableLevels.includes(level.id);
+            return (
+              <button 
+                key={level.id} 
+                disabled={!isAvailable} 
+                onClick={() => onChangeLevel(level.id)} 
+                className={cn(
+                  "flex-1 py-5 flex items-center justify-center gap-4 text-[10px] font-mono font-black uppercase tracking-[0.5em] transition-all relative border-r border-white/5 last:border-0", 
+                  isActive ? "bg-white text-black" : "text-white/20 hover:text-white/50 hover:bg-white/5", 
+                  !isAvailable && "opacity-10 cursor-not-allowed grayscale"
+                )}
+              >
+                <div className={cn("w-2 h-2 rounded-full shadow-sm", level.color)} />
+                {level.label}
+                {!isAvailable && <Lock size={12} className="ml-2 opacity-40" />}
+                {isActive && <motion.div layoutId="tab-active" className="absolute bottom-0 left-0 right-0 h-1.5 bg-[#D4AF37]" />}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- CONTENIDO DEL ARTÍCULO ---
+
+function ArticleContent({ overrideSlug }: { overrideSlug?: string }) {
+  const { slug: paramSlug } = useParams<{ slug: string }>();
+  const slug = overrideSlug || paramSlug;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [article, setArticle] = useState<AeternaArticle | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isMobileTocOpen, setIsMobileTocOpen] = useState(false);
-  const [sessionResults, setSessionResults] = useState<
-    { id: string; correct: boolean }[]
-  >([]);
-
-  const {
-    updateArticleProgress,
-    getArticleProgress,
-    progress: gamificationProgress,
-    completePath,
-    isCompleted: isPathCompleted,
-  } = useGamification();
+  const [activeHeadingId, setActiveHeadingId] = useState<string>("");
+  const [transitioning, setTransitioning] = useState(false);
+  
+  const currentLevel = (searchParams.get("nivel") || "principiante").toLowerCase();
   const { scrollYProgress } = useScroll();
-  const maxScrollRef = React.useRef(0);
-  const startTimeRef = React.useRef(Date.now());
-  const maxVelocityRef = React.useRef(0);
-
-  // Find the step corresponding to this article
-  let currentStep = null;
-  let currentCategory = null;
-  let roadmapSteps: any[] = [];
-  let roadmapTitle = "THE ALCHEMICAL PROCESS";
-
-  for (const [key, roadmap] of Object.entries(ROADMAPS)) {
-    const step = roadmap.steps.find((s) => s.id === slug);
-    if (step) {
-      currentStep = step;
-      currentCategory = key;
-      roadmapSteps = roadmap.steps;
-      roadmapTitle = roadmap.title;
-      break;
-    }
-  }
-
-  const isCompleted =
-    currentCategory && currentStep
-      ? isPathCompleted(`${currentCategory}.${currentStep.id}`)
-      : false;
-
-  useMotionValueEvent(scrollYProgress, "change", (latest) => {
-    if (!slug || loading) return;
-
-    // Track instantaneous scroll velocity
-    const currentVelocity = Math.abs(scrollYProgress.getVelocity());
-    if (currentVelocity > maxVelocityRef.current) {
-      maxVelocityRef.current = currentVelocity;
-    }
-
-    const currentPercent = Math.round(latest * 100);
-
-    // Only update if we've moved forward and it's a meaningful threshold
-    if (currentPercent > maxScrollRef.current && currentPercent > 0) {
-      maxScrollRef.current = currentPercent;
-
-      // Throttle updates: every 5% or 100%
-      if (currentPercent % 5 === 0 || currentPercent >= 95) {
-        const words = article?.content.trim().split(/\s+/).length || 0;
-        updateArticleProgress(slug, currentPercent, {
-          timeSpent: Date.now() - startTimeRef.current,
-          wordCount: words,
-          velocity: maxVelocityRef.current,
-        });
-      }
-    }
-  });
-
-  const scaleX = useSpring(scrollYProgress, {
-    stiffness: 100,
-    damping: 30,
-    restDelta: 0.001,
-  });
-
-  const headerOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
-  const headerY = useTransform(scrollYProgress, [0, 0.2], [0, -50]);
-  const imageScale = useTransform(scrollYProgress, [0, 0.4], [1, 1.2]);
-  const imageY = useTransform(scrollYProgress, [0, 0.4], [0, 100]);
+  const { completePath, progress: gamificationProgress } = useGamification();
+  const startTimeRef = useRef(Date.now());
 
   useEffect(() => {
     if (slug) {
-      maxScrollRef.current = getArticleProgress(slug);
-    }
-  }, [slug, getArticleProgress]);
-
-  useEffect(() => {
-    if (slug) {
-      getArticleBySlug(slug).then((data) => {
+      setLoading(true);
+      getStructuredArticleBySlug(slug).then(data => {
         setArticle(data);
         setLoading(false);
         window.scrollTo(0, 0);
-      });
+      }).catch(() => setLoading(false));
     }
   }, [slug]);
 
-  if (loading) return null;
-  if (!article)
-    return <div className="py-20 text-center">Artículo no encontrado</div>;
+  const liveProgress = useMemo(() => Math.round(scrollYProgress.get() * 100), [scrollYProgress.get()]);
 
-  const { data, content } = article;
-
-  // Breadcrumb logic
-  const categoryLink = subcategory
-    ? `/guias/${category}/${subcategory}`
-    : category
-      ? `/guias/${category}`
-      : `/${data.category.toLowerCase().replace(/\s+/g, "-")}`;
-  const categoryName = subcategory
-    ? subcategory.replace(/_/g, " ")
-    : data.category;
-  const slugger = new GithubSlugger();
-
-  // Define components inside to access local state
-  const components: any = {
-    ...markdownComponents,
-    code({ className, children, ...props }: any) {
-      const match = /language-([\w-]+)/.exec(className || "");
-      const textContent = extractText(children);
-
-      if (match && match[1] === "aeterna-question") {
-        // Track unique question result for precision
-        const questionId = btoa(
-          encodeURIComponent(
-            textContent.split("\n")[0].replace("Pregunta:", "").trim(),
-          ),
-        ).substring(0, 32);
-
-        return (
-          <AeternaInteractiveQuestion
-            content={textContent}
-            onResult={(correct: boolean) => {
-              setSessionResults((prev) => {
-                if (prev.find((r) => r.id === questionId)) return prev;
-                return [...prev, { id: questionId, correct }];
-              });
-            }}
-          />
-        );
-      }
-
-      if (match && match[1] === "aeterna-progresion-articulo") {
-        try {
-          const props = JSON.parse(decodeURIComponent(atob(textContent)));
-          return (
-            <ProgresionArticulo
-              hitos={props.hitos}
-              hitoInicial={props.hitoInicial}
-            />
-          );
-        } catch (e) {
-          return <div className="text-red-500">Error rendering progresion</div>;
-        }
-      }
-
-      if (match && match[1] === "aeterna-nivel-activo") {
-        try {
-          const props = JSON.parse(decodeURIComponent(atob(textContent)));
-          return (
-            <NivelActivo id={props.id}>
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                rehypePlugins={[rehypeSlug]}
-                components={components}
-              >
-                {props.content}
-              </ReactMarkdown>
-            </NivelActivo>
-          );
-        } catch (e) {
-          return (
-            <div className="text-red-500">Error rendering NivelActivo</div>
-          );
-        }
-      }
-
-      if (match && match[1] === "aeterna-indice-nivel") {
-        try {
-          const props = JSON.parse(decodeURIComponent(atob(textContent)));
-          return (
-            <IndiceNivel titulo={props.titulo}>
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                rehypePlugins={[rehypeSlug]}
-                components={components}
-              >
-                {props.content}
-              </ReactMarkdown>
-            </IndiceNivel>
-          );
-        } catch (e) {
-          return (
-            <div className="text-red-500">Error rendering IndiceNivel</div>
-          );
-        }
-      }
-
-      if (match && match[1] === "aeterna-mostrar-en-nivel") {
-        try {
-          const props = JSON.parse(decodeURIComponent(atob(textContent)));
-          return (
-            <MostrarEnNivel nivel={props.nivel} niveles={props.niveles}>
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                rehypePlugins={[rehypeSlug]}
-                components={components}
-              >
-                {props.content}
-              </ReactMarkdown>
-            </MostrarEnNivel>
-          );
-        } catch (e) {
-          return (
-            <div className="text-red-500">Error rendering MostrarEnNivel</div>
-          );
-        }
-      }
-
-      if (match && match[1] === "aeterna-boton-transicion") {
-        try {
-          const props = JSON.parse(decodeURIComponent(atob(textContent)));
-          return (
-            <BotonTransicion nivel={props.nivel}>
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                rehypePlugins={[rehypeSlug]}
-                components={components}
-              >
-                {props.content}
-              </ReactMarkdown>
-            </BotonTransicion>
-          );
-        } catch (e) {
-          return (
-            <div className="text-red-500">Error rendering BotonTransicion</div>
-          );
-        }
-      }
-
-      // Fallback
-      if (markdownComponents.code) {
-        return markdownComponents.code({ className, children, ...props });
-      }
-      return (
-        <code className={className} {...props}>
-          {children}
-        </code>
-      );
-    },
+  const changeLevel = (newLevel: string) => {
+    setTransitioning(true);
+    setTimeout(() => { 
+      setSearchParams({ nivel: newLevel }); 
+      window.scrollTo(0, 0); 
+      setTransitioning(false); 
+    }, 800);
   };
 
-  const words = content.trim().split(/\s+/).length;
-  const readTime = Math.ceil(words / 225) || 1;
+  const secciones = article?.secciones || [];
+  const availableLevels = useMemo(() => {
+    const found = [];
+    if (secciones.some(s => !!s.niveles.principiante)) found.push('principiante');
+    if (secciones.some(s => !!s.niveles.intermedio)) found.push('intermedio');
+    if (secciones.some(s => !!s.niveles.avanzado)) found.push('avanzado');
+    return found;
+  }, [secciones]);
 
-  // Pre-process markdown to convert custom blocks to code blocks
-  let processedContent = content;
-
-  const dedent = (text: string) => {
-    const lines = text.split("\n");
-    let minIndent = Infinity;
-    for (const line of lines) {
-      if (line.trim().length > 0) {
-        const indent = line.match(/^[ \t]*/)?.[0].length || 0;
-        minIndent = Math.min(minIndent, indent);
+  useEffect(() => {
+    if (!loading && article && secciones.length > 0) {
+      const hasCurrentLevel = secciones.some(s => !!s.niveles?.[currentLevel as keyof typeof s.niveles]);
+      if (!hasCurrentLevel) {
+        const fallback = availableLevels.includes('intermedio') ? 'intermedio' : availableLevels[0];
+        if (fallback && fallback !== currentLevel) setSearchParams({ nivel: fallback });
       }
     }
-    if (minIndent === Infinity || minIndent === 0) return text;
-    return lines
-      .map((line) =>
-        line.length >= minIndent ? line.substring(minIndent) : line,
-      )
-      .join("\n");
-  };
+  }, [loading, article, currentLevel, availableLevels, secciones, setSearchParams]);
 
-  // Render Botones (we process innermost first)
-  const BOTON_TYPES = [
-    "BotonSimplificar",
-    "BotonProfundizar",
-    "BotonEjemplos",
-    "BotonConexiones",
-  ];
-  BOTON_TYPES.forEach((type) => {
-    const regex = new RegExp(`<${type}>([\\s\\S]*?)<\\/${type}>`, "g");
-    processedContent = processedContent.replace(regex, (match, inner) => {
-      return `\n\`\`\`aeterna-boton\n${btoa(encodeURIComponent(JSON.stringify({ type, content: dedent(inner) })))}\n\`\`\`\n`;
-    });
-  });
-
-  // AccionBotones
-  processedContent = processedContent.replace(
-    /<AccionBotones>([\s\S]*?)<\/AccionBotones>/g,
-    (match, inner) => {
-      return `\n\`\`\`aeterna-accion-botones\n${btoa(encodeURIComponent(dedent(inner)))}\n\`\`\`\n`;
-    },
-  );
-
-  // AeternaDecisionBox handling when passed structurally
-  processedContent = processedContent.replace(
-    /<AeternaDecisionBox([\s\S]*?)(?<!<)\/>/g,
-    (match, propsStr) => {
-      // Parse question
-      const qMatch = propsStr.match(/question=["']([^"']+)["']/);
-      const question = qMatch ? qMatch[1] : "";
-
-      // Parse options
-      const options: string[] = [];
-      const optRegex = /text:\s*["']([^"']+)["']/g;
-      let optMatch;
-      while ((optMatch = optRegex.exec(propsStr)) !== null) {
-        options.push(optMatch[1]);
-      }
-
-      // Parse correctIndex
-      const idxMatch = propsStr.match(/correctIndex=\{?(\d+)\}?/);
-      const correctIndex = idxMatch ? parseInt(idxMatch[1]) : 0;
-
-      let newContent = `Pregunta: ${question}\nOpciones:\n`;
-      options.forEach((opt) => {
-        newContent += `- ${opt}\n`;
+  const displaySecciones = useMemo(() => {
+    if (!article) return [];
+    return secciones
+      .filter(s => !!s.niveles?.[currentLevel as keyof typeof s.niveles])
+      .map(s => {
+        // Resolve dynamic title for this level
+        const sectionTitle = typeof s.titulo === 'object' 
+          ? (s.titulo[currentLevel as keyof typeof s.niveles] || s.titulo['principiante'] || s.id)
+          : s.titulo;
+          
+        return { 
+          ...s, 
+          activeTitle: sectionTitle,
+          activeContent: s.niveles[currentLevel as keyof typeof s.niveles] 
+        };
       });
-      if (options[correctIndex]) {
-        newContent += `RespuestaCorrecta: ${options[correctIndex]}\n`;
-      }
+  }, [secciones, currentLevel, article]);
 
-      return `\n\`\`\`aeterna-question\n${newContent}\n\`\`\`\n`;
-    },
-  );
+  useEffect(() => {
+    if (!article) return;
+    const observer = new IntersectionObserver((entries) => { 
+      entries.forEach(e => { if (e.isIntersecting) setActiveHeadingId(e.target.id); }); 
+    }, { rootMargin: "-150px 0px -50% 0px" });
+    displaySecciones.forEach(s => { 
+      const el = document.getElementById(s.id); 
+      if (el) observer.observe(el); 
+    });
+    return () => observer.disconnect();
+  }, [article, loading, currentLevel, displaySecciones]);
 
-  // NivelContenido
-  processedContent = processedContent.replace(
-    /<NivelContenido([\s\S]*?)(?<!<)\/>/g,
-    (match, inner) => {
-      const levels: any = {};
-      const regex =
-        /(principiante|intermedio|avanzado)=\{\s*<>\n?([\s\S]*?)\n?\s*<\/>\s*\}/g;
-      let m;
-      while ((m = regex.exec(inner)) !== null) {
-        levels[m[1]] = dedent(m[2]);
-      }
-      if (Object.keys(levels).length === 0) {
-        const backupRegex = /(principiante|intermedio|avanzado)=\{([^}]*)\}/g;
-        let m2;
-        while ((m2 = backupRegex.exec(inner)) !== null) {
-          levels[m2[1]] = dedent(
-            m2[2].replace(/^\s*<>\n?/, "").replace(/\n?\s*<\/>\s*$/, ""),
-          );
-        }
-      }
-      return `\n\`\`\`aeterna-nivel-contenido\n${btoa(encodeURIComponent(JSON.stringify(levels)))}\n\`\`\`\n`;
-    },
-  );
+  const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30 });
 
-  // NivelSelector
-  processedContent = processedContent.replace(
-    /<NivelSelector([\s\S]*?)(?<!<)\/>/g,
-    (match, propsStr) => {
-      let niveles = ["Principiante", "Intermedio", "Avanzado"];
-      let nivelPorDefecto = "Intermedio";
+  if (loading) return <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center"><div className="w-24 h-px bg-[#D4AF37] animate-pulse" /></div>;
+  if (!article) return <div className="min-h-screen bg-[#FDFBF7] text-[#1A1A1A] flex items-center justify-center font-serif text-3xl uppercase tracking-widest italic opacity-20">Señal Perdida</div>;
 
-      const nivelesMatch = propsStr.match(/niveles=\{([^}]+)\}/);
-      if (nivelesMatch) {
-        try {
-          const arrStr = nivelesMatch[1].replace(/'/g, '"');
-          niveles = JSON.parse(arrStr);
-        } catch (e) {}
-      }
-
-      const defMatch = propsStr.match(/nivelPorDefecto=["']([^"']+)["']/);
-      if (defMatch) {
-        nivelPorDefecto = defMatch[1];
-      }
-
-      return `\n\`\`\`aeterna-nivel-selector\n${btoa(encodeURIComponent(JSON.stringify({ niveles, nivelPorDefecto })))}\n\`\`\`\n`;
-    },
-  );
-
-  // ProgresionArticulo
-  processedContent = processedContent.replace(
-    /<ProgresionArticulo([\s\S]*?)\/>/g,
-    (match, propsStr) => {
-      let hitos = ["Fundamentos", "Profundización", "Frontera"];
-      let hitoInicial = "Fundamentos";
-
-      const hitosMatch = propsStr.match(/hitos=\{([^}]+)\}/);
-      if (hitosMatch) {
-        try {
-          const arrStr = hitosMatch[1].replace(/'/g, '"');
-          hitos = JSON.parse(arrStr);
-        } catch (e) {}
-      }
-
-      const hitoActivoMatch = propsStr.match(/hitoInicial=["']([^"']+)["']/);
-      if (hitoActivoMatch) {
-        hitoInicial = hitoActivoMatch[1];
-      }
-
-      return `\n\`\`\`aeterna-progresion-articulo\n${btoa(encodeURIComponent(JSON.stringify({ hitos, hitoInicial })))}\n\`\`\`\n`;
-    },
-  );
-
-  // IndiceNivel
-  processedContent = processedContent.replace(
-    /<IndiceNivel\s+titulo=["']([^"']+)["']>([\s\S]*?)<\/IndiceNivel>/g,
-    (match, titulo, inner) => {
-      return `\n\`\`\`aeterna-indice-nivel\n${btoa(encodeURIComponent(JSON.stringify({ titulo, content: dedent(inner) })))}\n\`\`\`\n`;
-    },
-  );
-
-  // BotonTransicion
-  processedContent = processedContent.replace(
-    /<BotonTransicion\s+nivel=["']([^"']+)["']>([\s\S]*?)<\/BotonTransicion>/g,
-    (match, nivel, inner) => {
-      return `\n\`\`\`aeterna-boton-transicion\n${btoa(encodeURIComponent(JSON.stringify({ nivel, content: dedent(inner) })))}\n\`\`\`\n`;
-    },
-  );
-
-  // MostrarEnNivel
-  processedContent = processedContent.replace(
-    /<MostrarEnNivel\s+(?:nivel=["']([^"']+)["']\s*)?(?:niveles=\{([^}]+)\}\s*)?>([\s\S]*?)<\/MostrarEnNivel>/g,
-    (match, nivel, nivelesStr, inner) => {
-      let niveles = undefined;
-      if (nivelesStr) {
-        try {
-          niveles = eval(nivelesStr); // Assuming it's written as ["Fundamentos"]
-        } catch (e) {}
-      }
-      return `\n\`\`\`aeterna-mostrar-en-nivel\n${btoa(encodeURIComponent(JSON.stringify({ nivel, niveles, content: dedent(inner) })))}\n\`\`\`\n`;
-    },
-  );
-
-  // NivelActivo
-  processedContent = processedContent.replace(
-    /<NivelActivo\s+id=["']([^"']+)["']>([\s\S]*?)<\/NivelActivo>/g,
-    (match, id, inner) => {
-      return `\n\`\`\`aeterna-nivel-activo\n${btoa(encodeURIComponent(JSON.stringify({ id, content: dedent(inner) })))}\n\`\`\`\n`;
-    },
-  );
-
-  processedContent = processedContent.replace(
-    /::aeterna-question([\s\S]*?)::/g,
-    (match, inner) => {
-      return `\`\`\`aeterna-question\n${inner.trim()}\n\`\`\``;
-    },
-  );
-
-  processedContent = processedContent.replace(
-    /::aeterna-decision([\s\S]*?)::/g,
-    (match, inner) => {
-      return `\`\`\`aeterna-decision\n${inner.trim()}\n\`\`\``;
-    },
-  );
-
-  processedContent = processedContent.replace(
-    /::aeterna-equation([\s\S]*?)::/g,
-    (match, inner) => {
-      return `\`\`\`aeterna-equation\n${inner.trim()}\n\`\`\``;
-    },
-  );
-
-  // Pre-process practice problems for style
-  if (data.tipo === "practice") {
-    processedContent = processedContent.replace(
-      /### ✅ Problema resuelto (.*?)\n([\s\S]*?)(?=\n### |\n## |\n---|\n\*\*Ejercicio|$)/g,
-      (match, title, body) => {
-        return `\`\`\`aeterna-practice\nTITLE: ${title.trim()}\n${body.trim()}\n\`\`\``;
-      },
-    );
-  }
+  const { metadata, introduccion } = article;
 
   return (
-    <div className="pb-32">
-      <div className="fixed right-0 top-[20%] xl:top-1/3 -translate-y-1/2 z-50 flex flex-col items-end hidden md:flex">
-        <div className="group relative flex items-center">
-          {/* The dropdown options that expand out */}
-          <div className="absolute right-full top-0 mr-2 flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto flex">
-            {["Capa 1", "Capa 2", "Capa 3"].map((layer, idx) => {
-              const currentLevelLower =
-                activeLevel?.toLowerCase() || "fundamentos";
-              const isCurrent =
-                activeLevel?.includes(layer) ||
-                (idx === 0 &&
-                  ["principiante", "fundamentos", "capa 1"].includes(
-                    currentLevelLower,
-                  )) ||
-                (idx === 1 &&
-                  ["intermedio", "profundización", "capa 2"].includes(
-                    currentLevelLower,
-                  )) ||
-                (idx === 2 &&
-                  ["avanzado", "frontera", "capa 3"].includes(
-                    currentLevelLower,
-                  ));
-              return (
-                <button
-                  key={layer}
-                  onClick={() => {
-                    let levels = ["Fundamentos", "Profundización", "Frontera"];
-                    if (
-                      ["principiante", "intermedio", "avanzado"].includes(
-                        currentLevelLower,
-                      )
-                    ) {
-                      levels = ["Principiante", "Intermedio", "Avanzado"];
-                    } else if (
-                      ["capa 1", "capa 2", "capa 3"].includes(currentLevelLower)
-                    ) {
-                      levels = ["Capa 1", "Capa 2", "Capa 3"];
-                    }
-                    const newLevel = levels[idx] || levels[0];
-                    setActiveLevel(newLevel);
-                  }}
-                  className={`px-4 py-2 text-[10px] font-sans font-bold uppercase tracking-[0.2em] whitespace-nowrap bg-white border outline-none transition-colors shadow-sm ${isCurrent ? "border-brand-gold text-brand-gold bg-brand-gold/5" : "border-brand-ink/10 text-brand-ink/60 hover:text-brand-ink hover:border-brand-ink/40 hover:bg-zinc-50"}`}
-                >
-                  {layer}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* The flag handle */}
-          <div className="bg-brand-ink text-brand-offwhite py-6 px-1.5 flex flex-col items-center justify-center gap-4 shadow-lg border-y border-l border-brand-ink/20 rounded-l-md transition-colors hover:bg-brand-gold cursor-pointer">
-            <Layers className="w-4 h-4 text-brand-gold transition-colors group-hover:text-white" />
-            <div
-              className="tracking-[0.5em] uppercase text-[9px] font-sans font-bold whitespace-nowrap"
-              style={{
-                writingMode: "vertical-rl",
-                transform: "rotate(180deg)",
-              }}
-            >
-              {["principiante", "fundamentos"].includes(
-                (activeLevel || "fundamentos").toLowerCase(),
-              ) || (activeLevel || "").includes("Capa 1")
-                ? "CAPA 1"
-                : ["intermedio", "profundización"].includes(
-                      (activeLevel || "fundamentos").toLowerCase(),
-                    ) || (activeLevel || "").includes("Capa 2")
-                  ? "CAPA 2"
-                  : ["avanzado", "frontera"].includes(
-                        (activeLevel || "fundamentos").toLowerCase(),
-                      ) || (activeLevel || "").includes("Capa 3")
-                    ? "CAPA 3"
-                    : (activeLevel || "").toUpperCase()}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Progress Bar */}
-      <motion.div
-        className="fixed top-20 left-0 right-0 h-1 bg-brand-gold z-50 origin-left no-print"
-        style={{ scaleX }}
+    <div className="bg-[#FDFBF7] min-h-screen text-[#1A1A1A] selection:bg-[#D4AF37] selection:text-white pb-64">
+      <MasteryCommandCenter 
+        currentLevel={currentLevel} 
+        onChangeLevel={changeLevel} 
+        progress={liveProgress} 
+        xpGained={gamificationProgress.xpInSession || 0} 
+        availableLevels={availableLevels} 
       />
-
-      {/* Modern Editorial Header */}
-      <div className="relative w-full min-h-[85vh] overflow-hidden bg-brand-ink flex items-end">
-        <motion.div
-          style={{ scale: imageScale, y: imageY }}
-          className="absolute inset-0 w-full h-full"
-        >
-          <img
-            src={data.image}
-            alt={data.title}
-            className="w-full h-full object-cover opacity-60 mix-blend-overlay"
-            referrerPolicy="no-referrer"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-brand-ink via-brand-ink/40 to-transparent" />
-        </motion.div>
-
-        <div className="relative w-full px-6 md:px-12 lg:px-24 pb-20 md:pb-32 max-w-[1600px] mx-auto z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-            style={{ opacity: headerOpacity, y: headerY }}
+      <FloatingLevelLabel level={currentLevel} />
+      
+      <AnimatePresence>
+        {transitioning && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} 
+            className="fixed inset-0 z-[200] bg-white flex flex-col items-center justify-center gap-10 backdrop-blur-3xl bg-white/90"
           >
-            <div className="flex items-center gap-6 text-[9px] md:text-[10px] font-medium uppercase tracking-[0.3em] text-brand-gold mb-12">
-              <Link to="/" className="hover:text-white transition-colors">
-                Volumen I
-              </Link>
-              <div className="w-[1px] h-3 bg-brand-gold/50"></div>
-              <Link
-                to={categoryLink}
-                className="hover:text-white transition-colors"
-              >
-                {categoryName}
-              </Link>
-              {subcategory && (
-                <>
-                  <div className="w-[1px] h-3 bg-brand-gold/50"></div>
-                  <span className="text-white/60">
-                    {subcategory.replace(/-/g, " ")}
-                  </span>
-                </>
-              )}
+            <BrainCircuit className="w-20 h-20 text-[#D4AF37] animate-[pulse_1.5s_ease-in-out_infinite]" />
+            <span className="text-[12px] font-mono font-black uppercase tracking-[0.8em] text-[#8B6914] ml-[0.8em]">Sincronizando Nueva Capa</span>
+            <div className="w-48 h-0.5 bg-black/5 rounded-full overflow-hidden">
+               <motion.div initial={{ x: '-100%' }} animate={{ x: '100%' }} transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }} className="w-full h-full bg-[#D4AF37]" />
             </div>
-
-            <h1 className="font-serif text-5xl sm:text-7xl md:text-[6.5rem] lg:text-[8rem] font-normal leading-[0.95] text-white tracking-normal max-w-6xl mb-12">
-              {data.title}
-            </h1>
-
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.8, duration: 1.5 }}
-              className="flex justify-between items-end border-t border-white/20 pt-8"
-            >
-              <p className="text-base sm:text-lg md:text-xl text-white/70 font-body font-normal max-w-2xl leading-[1.7]">
-                {data.description}
-              </p>
-            </motion.div>
           </motion.div>
-        </div>
+        )}
+      </AnimatePresence>
+
+      <header className="relative pt-48 pb-32 px-10 bg-[#FDFBF7] border-b border-black/5 overflow-hidden">
+         <div className="absolute top-0 right-0 p-20 opacity-[0.02] pointer-events-none"><Layers size={500} /></div>
+         <div className="max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-32 items-end relative z-10">
+            <div>
+               <div className="flex items-center gap-6 text-[11px] font-mono font-black uppercase tracking-[0.6em] text-[#8B6914] mb-16">
+                  <span>{metadata.category}</span>
+                  <div className="w-12 h-px bg-[#D4AF37]/50" />
+                  <span className="opacity-40">{metadata.subcategory}</span>
+               </div>
+               <h1 className="font-serif text-5xl md:text-8xl lg:text-[10rem] leading-[0.85] tracking-tighter mb-16 uppercase italic">
+                  {metadata.title.split(':').map((p, i) => (
+                    <span key={i} className={i === 1 ? "block text-black/40 mt-4 not-italic font-light text-5xl md:text-7xl" : ""}>{p}</span>
+                  ))}
+               </h1>
+               <div className="flex items-center gap-16 text-[10px] font-mono uppercase tracking-[0.4em] text-black/20">
+                  <div className="flex flex-col gap-3"><span>Autor de Registro</span><span className="text-black font-black">{metadata.author}</span></div>
+                  <div className="flex flex-col gap-3"><span>Descriptor de Datos</span><span className="text-black font-black uppercase">{metadata.slug.substring(0, 12)}</span></div>
+               </div>
+            </div>
+            <div className="relative group overflow-hidden rounded-[4rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.2)] aspect-[16/8] bg-[#F5F2ED]">
+               <img src={metadata.image} className="w-full h-full object-cover grayscale contrast-125 opacity-70 group-hover:scale-110 transition-transform duration-[3s]" alt={metadata.title} />
+               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
+               <div className="absolute bottom-12 left-12 right-12">
+                  <p className="text-white text-2xl font-serif font-light leading-relaxed italic border-l-2 border-[#D4AF37] pl-8">{metadata.description}</p>
+               </div>
+            </div>
+         </div>
+      </header>
+
+      <div className="max-w-[1600px] mx-auto px-10 mt-40 flex flex-col xl:flex-row gap-40">
+        <SidebarTOC sections={displaySecciones} activeId={activeHeadingId} currentLevel={currentLevel} />
+        
+        <main className="flex-1 max-w-4xl mx-auto xl:mx-0">
+          {currentLevel === 'principiante' && introduccion && (
+            <div className="prose prose-2xl max-w-none mb-48 border-b border-black/5 pb-32 italic text-[#3E2C23]/60 font-serif leading-relaxed">
+              <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeSlug, rehypeKatex]} components={markdownComponents}>
+                {introduccion}
+              </ReactMarkdown>
+            </div>
+          )}
+
+          <div className="space-y-80">
+            {displaySecciones.map((seccion, idx) => (
+              <section key={`${seccion.id}-${currentLevel}`} id={seccion.id} className="relative group">
+                <div className="prose prose-2xl max-w-none">
+                  <div className="flex items-center gap-6 mb-16">
+                    <span className="text-[11px] font-mono font-black tracking-[0.8em] text-[#D4AF37] ml-[0.8em]">HITOS / {String(idx + 1).padStart(2, '0')}</span>
+                    <div className="h-px flex-1 bg-black/5" />
+                  </div>
+                  <h2 className="font-serif text-4xl md:text-6xl lg:text-8xl text-[#1A1A1A] mb-20 tracking-tighter uppercase leading-[0.9] italic">
+                    {seccion.activeTitle}
+                  </h2>
+                  <ReactMarkdown 
+                    remarkPlugins={[remarkGfm, remarkMath]} 
+                    rehypePlugins={[rehypeSlug, rehypeKatex]} 
+                    components={{
+                      ...markdownComponents,
+                      code({ className, children, ...props }: any) {
+                        const textContent = extractText(children);
+                        const match = /<BotonTransicion\s+nivel="([^"]+)">([\s\S]*?)<\/BotonTransicion>/.exec(textContent);
+                        if (match) {
+                           return <BotonTransicion nivel={match[1]}>{match[2]}</BotonTransicion>;
+                        }
+                        return markdownComponents.code({ className, children, ...props });
+                      }
+                    }}
+                  >
+                    {seccion.activeContent}
+                  </ReactMarkdown>
+                </div>
+                
+                {seccion.acciones && seccion.acciones.length > 0 && (
+                  <div className="mt-24">
+                    <AccionBotones>
+                      {seccion.acciones.map((accion: any, aidx: number) => { 
+                        const Btn = accion.tipo === 'BotonSimplificar' ? BotonSimplificar : accion.tipo === 'BotonProfundizar' ? BotonProfundizar : accion.tipo === 'BotonEjemplos' ? BotonEjemplos : BotonConexiones; 
+                        return (
+                          <Btn key={aidx}>
+                            <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]} components={markdownComponents}>
+                              {accion.contenido}
+                            </ReactMarkdown>
+                          </Btn>
+                        ); 
+                      })}
+                    </AccionBotones>
+                  </div>
+                )}
+              </section>
+            ))}
+          </div>
+
+          <div className="mt-80 p-20 md:p-32 rounded-[5rem] bg-[#0D0D0F] text-white relative overflow-hidden text-center shadow-[0_100px_150px_-30px_rgba(0,0,0,0.4)]">
+             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(212,175,55,0.08)_0%,transparent_70%)] animate-[pulse_5s_ease-in-out_infinite]" />
+             <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-transparent via-[#D4AF37]/40 to-transparent" />
+             
+             <BrainCircuit className="w-24 h-24 text-[#D4AF37] mb-16 mx-auto animate-pulse" />
+             
+             {currentLevel === 'principiante' && (
+               <div className="relative z-10">
+                 <span className="text-[11px] font-mono font-black tracking-[1em] text-[#D4AF37] uppercase mb-10 block ml-[1em]">Estado: Fundamentos Asimilados</span>
+                 <h3 className="font-serif text-5xl md:text-7xl mb-12 uppercase tracking-tighter italic">Iniciación Superada</h3>
+                 <p className="text-white/30 font-serif text-xl mb-20 max-w-lg mx-auto font-light leading-relaxed">Su mente ha procesado la estructura básica. El Nexo está listo para la exégesis técnica.</p>
+                 <button onClick={() => changeLevel('intermedio')} className="group relative px-24 py-8 bg-[#D4AF37] text-black font-black uppercase tracking-[0.6em] text-[12px] hover:bg-white transition-all shadow-[0_0_50px_rgba(212,175,55,0.3)]">
+                   <span className="relative z-10 flex items-center gap-6">Ascender a Capa II <Zap size={20} /></span>
+                 </button>
+               </div>
+             )}
+             
+             {currentLevel === 'intermedio' && (
+               <div className="relative z-10">
+                 <span className="text-[11px] font-mono font-black tracking-[1em] text-[#D4AF37] uppercase mb-10 block ml-[1em]">Estado: Exégesis Sellada</span>
+                 <h3 className="font-serif text-5xl md:text-7xl mb-12 uppercase tracking-tighter italic">Comprensión Técnica</h3>
+                 <p className="text-white/30 font-serif text-xl mb-20 max-w-lg mx-auto font-light leading-relaxed">Los mecanismos internos son ahora parte de su mapa cognitivo. Los axiomas de frontera esperan.</p>
+                 <button onClick={() => changeLevel('avanzado')} className="group relative px-24 py-8 bg-[#D4AF37] text-black font-black uppercase tracking-[0.6em] text-[12px] hover:bg-white transition-all shadow-[0_0_50px_rgba(212,175,55,0.3)]">
+                   <span className="relative z-10 flex items-center gap-6">Desbloquear Capa III <Lock size={20} /></span>
+                 </button>
+               </div>
+             )}
+             
+             {currentLevel === 'avanzado' && (
+               <div className="relative z-10">
+                 <span className="text-[11px] font-mono font-black tracking-[1em] text-[#D4AF37] uppercase mb-10 block ml-[1em]">Estado: Gnosis Absoluta</span>
+                 <h3 className="font-serif text-5xl md:text-7xl mb-12 uppercase tracking-tighter italic">Maestría de la Frontera</h3>
+                 <p className="text-white/30 font-serif text-xl mb-20 max-w-lg mx-auto font-light leading-relaxed">Este tomo ha sido grabado permanentemente en su base de datos de la realidad.</p>
+                 <button onClick={() => completePath(metadata.slug, { timeSpent: Date.now() - startTimeRef.current })} className="group relative px-24 py-8 bg-white text-black font-black uppercase tracking-[0.6em] text-[12px] hover:bg-[#D4AF37] transition-all shadow-2xl">
+                   <span className="relative z-10 flex items-center gap-6">Sellar Tomo en el Nexo <Target size={20} /></span>
+                 </button>
+               </div>
+             )}
+          </div>
+        </main>
       </div>
 
-      {/* Meta Bar - Luxury Minimal */}
-      <section className="relative z-20 border-b border-brand-ink/10 bg-[#f5f2ed] no-print">
-        <div className="mx-auto max-w-[1600px] px-6 md:px-12 lg:px-24">
-          <div className="flex flex-wrap lg:divide-x divide-brand-ink/10">
-            <div className="flex-1 min-w-[200px] py-10 lg:pr-12 flex flex-col justify-center">
-              <span className="text-[9px] font-medium text-brand-ink/50 uppercase tracking-[0.2em] mb-3">
-                Autor
-              </span>
-              <span className="text-[13px] font-sans tracking-wide text-brand-ink uppercase">
-                {data.author}
-              </span>
-            </div>
-
-            <div className="flex-1 min-w-[200px] py-10 lg:px-12 flex flex-col justify-center">
-              <span className="text-[9px] font-medium text-brand-ink/50 uppercase tracking-[0.2em] mb-3">
-                Fecha de publicación
-              </span>
-              <span className="text-[13px] font-sans tracking-wide text-brand-ink uppercase">
-                {formatDate(data.date)}
-              </span>
-            </div>
-
-            <div className="flex-1 min-w-[200px] py-10 lg:px-12 flex flex-col justify-center">
-              <span className="text-[9px] font-medium text-brand-ink/50 uppercase tracking-[0.2em] mb-3">
-                Tiempo estimado
-              </span>
-              <span className="text-[13px] font-sans tracking-wide text-brand-ink uppercase">
-                {readTime} min lectura
-              </span>
-            </div>
-
-            <div className="py-10 pl-12 flex items-center gap-6 justify-end">
-              <button className="flex items-center justify-center w-10 h-10 rounded-full border border-brand-ink/20 hover:bg-brand-ink hover:text-white transition-all duration-300 text-brand-ink">
-                <Share2 className="h-[14px] w-[14px]" />
-              </button>
-              <button
-                onClick={() => window.print()}
-                className="flex items-center justify-center w-10 h-10 rounded-full border border-brand-ink/20 hover:bg-brand-ink hover:text-white transition-all duration-300 text-brand-ink"
-              >
-                <Printer className="h-[14px] w-[14px]" />
-              </button>
-            </div>
+      {/* Footer Navigation bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#FDFBF7]/90 backdrop-blur-2xl border-t border-black/5 py-6 px-12">
+        <div className="max-w-[1600px] mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-6 text-[10px] font-mono font-black uppercase tracking-[0.5em] text-black/40">
+            <ArrowDown size={16} className="animate-bounce text-[#D4AF37]" />
+            <span>Desplázate para asimilar</span>
+          </div>
+          <div className="flex items-center gap-12">
+            <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="w-12 h-12 rounded-full border border-black/10 flex items-center justify-center text-black/30 hover:text-black hover:border-black/30 transition-all shadow-sm"><ArrowUp size={20} /></button>
+            <button 
+              onClick={() => { 
+                const portal = document.querySelector('.bg-\\[#0D0D0F\\]'); 
+                portal?.scrollIntoView({ behavior: 'smooth' }); 
+              }} 
+              className="px-14 py-4 bg-black text-white font-black text-[11px] uppercase tracking-[0.6em] rounded-2xl hover:bg-[#D4AF37] hover:text-black transition-all shadow-xl shadow-black/10 flex items-center gap-4 group"
+            >
+              Completar Nivel <ChevronRight size={16} className="group-hover:translate-x-2 transition-transform" />
+            </button>
           </div>
         </div>
-      </section>
-
-      <LevelProvider>
-        <div className="mx-auto max-w-[1600px] px-6 lg:px-12 xl:px-24 mt-20 flex flex-col lg:flex-row gap-16 lg:gap-32">
-          {/* Left Sidebar (Desktop Only) */}
-          <aside className="hidden lg:block w-72 shrink-0">
-            <div className="sticky top-32 space-y-16">
-              <div className="space-y-8">
-                <SidebarTOC />
-              </div>
-
-              <div className="pt-12 border-t border-brand-ink/10">
-                <h4 className="text-[10px] font-medium uppercase tracking-[0.2em] text-brand-ink/50 mb-6">
-                  Detalles del Tomo
-                </h4>
-                <div className="flex flex-col gap-6">
-                  <div className="flex items-center gap-4 text-sm text-brand-ink/70">
-                    <div className="w-10 h-10 rounded-full border border-brand-ink/10 flex items-center justify-center">
-                      <Clock className="w-4 h-4 text-brand-ink/50" />
-                    </div>
-                    <span className="font-serif">
-                      <strong className="text-brand-ink font-sans font-medium text-xs tracking-wide">
-                        {readTime} MIN
-                      </strong>{" "}
-                      lectura
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-4 text-sm text-brand-ink/70">
-                    <div className="w-10 h-10 rounded-full border border-brand-ink/10 flex items-center justify-center">
-                      <Languages className="w-4 h-4 text-brand-ink/50" />
-                    </div>
-                    <span className="font-serif">
-                      <strong className="text-brand-ink font-sans font-medium text-xs tracking-wide">
-                        {words}
-                      </strong>{" "}
-                      palabras
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </aside>
-
-          {/* Main Content */}
-          <div className="flex-1 max-w-[850px] w-full flex flex-col mx-auto lg:mx-0 pb-32">
-            {/* Mobile Inline TOC */}
-            <div className="lg:hidden w-full mb-12 bg-white border border-brand-ink/10 rounded-sm shadow-sm">
-              <button
-                onClick={() => setIsMobileTocOpen(!isMobileTocOpen)}
-                className="w-full flex items-center justify-between p-6 text-left hover:bg-zinc-50 transition-colors"
-              >
-                <div className="flex items-center gap-4">
-                  <List className="w-5 h-5 text-brand-gold" />
-                  <span className="font-serif text-lg tracking-wide text-brand-ink uppercase font-normal">
-                    Contenido del Tomo
-                  </span>
-                </div>
-                <ChevronDown
-                  className={`w-5 h-5 text-brand-ink transition-transform duration-300 ${isMobileTocOpen ? "-rotate-180" : ""}`}
-                />
-              </button>
-
-              <AnimatePresence>
-                {isMobileTocOpen && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="p-6 pt-0 border-t border-brand-ink/5 bg-white">
-                      <MobileTOC
-                        isMobileTocOpen={isMobileTocOpen}
-                        setIsMobileTocOpen={setIsMobileTocOpen}
-                      />
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            <article className="w-full">
-              <ArticleProgressBar
-                articleTitle={article.data.title}
-                currentStepTitle={currentStep?.title}
-              />
-
-              <div
-                className="markdown-body prose-lg max-w-none 
-              first-letter:font-serif first-letter:text-[5rem] md:first-letter:text-[6.5rem] first-letter:font-normal first-letter:text-brand-ink first-letter:mr-4 first-letter:float-left first-letter:leading-[0.8] first-letter:mt-2
-              selection:bg-brand-gold/20 selection:text-brand-ink"
-              >
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  rehypePlugins={[rehypeSlug]}
-                  components={components}
-                >
-                  {processedContent}
-                </ReactMarkdown>
-              </div>
-
-              {currentStep && (
-                <div className="mt-12 mb-16">
-                  {!isCompleted ? (
-                    <div className="bg-brand-ink border border-brand-border p-8 text-center rounded-sm">
-                      <BrainCircuit className="w-8 h-8 text-brand-gold mx-auto mb-4" />
-                      <h4 className="font-serif text-2xl text-white mb-2">
-                        Completar Estudio
-                      </h4>
-                      <p className="text-brand-muted text-sm mb-6">
-                        Marca este artículo como completado para desbloquear la
-                        prueba de dominio.
-                      </p>
-                      <button
-                        onClick={() => {
-                          const words =
-                            article?.content.trim().split(/\s+/).length || 0;
-                          completePath(`${currentCategory}.${currentStep.id}`, {
-                            timeSpent: Date.now() - startTimeRef.current,
-                            wordCount: words,
-                            velocity: maxVelocityRef.current,
-                          });
-                        }}
-                        className="px-8 py-4 bg-brand-gold text-brand-ink text-[10px] font-bold uppercase tracking-[0.4em] hover:bg-white transition-all shadow-[0_0_20px_rgba(212,175,55,0.2)]"
-                      >
-                        Marcar como Leído
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="pt-8 border-t border-brand-border/30">
-                      <AeternaExamTool
-                        levelNum={currentStep.level?.num || 1}
-                        levelTitle={currentStep.title}
-                        badgeName={currentStep.level?.badge || "Explorador"}
-                        categoryName={`${currentCategory}_${currentStep.id}`}
-                        questions={ARTICLE_QUESTIONS[slug]}
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <div className="mt-20 pt-10 border-t border-brand-ink/5">
-                <div className="flex flex-wrap gap-2">
-                  {data.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="bg-brand-ink/5 px-3 py-1 text-[10px] font-bold uppercase tracking-widest hover:bg-brand-ink/10 transition-colors cursor-pointer"
-                    >
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {/* Interactive Engagement Area */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className="mt-24 border border-brand-border bg-white p-12 md:p-16 flex flex-col items-center text-center relative overflow-hidden"
-              >
-                <div className="absolute top-0 right-0 w-32 h-32 bg-brand-gold/5 rounded-none pointer-events-none" />
-                <div className="absolute bottom-0 left-0 w-32 h-32 bg-brand-ink/5 rounded-none pointer-events-none" />
-
-                <Lightbulb className="w-10 h-10 text-brand-gold mb-8 relative z-10" />
-                <h3 className="font-serif text-[1.75rem] md:text-[2.25rem] mb-6 text-brand-ink tracking-tight relative z-10">
-                  {[
-                    "Fundamentos",
-                    "Profundización",
-                    "Principiante",
-                    "Intermedio",
-                    "Capa 1",
-                    "Capa 2",
-                  ].includes(activeLevel) ? (
-                    <>
-                      <span className="italic">Progresión</span> del
-                      Conocimiento
-                    </>
-                  ) : (
-                    <>
-                      Conclusión de la <span className="italic">Lectura</span>
-                    </>
-                  )}
-                </h3>
-                <p className="text-brand-muted mb-10 max-w-md relative z-10 font-body text-[1.125rem]">
-                  {[
-                    "Fundamentos",
-                    "Profundización",
-                    "Principiante",
-                    "Intermedio",
-                    "Capa 1",
-                    "Capa 2",
-                  ].includes(activeLevel)
-                    ? `Ha completado el nivel de ${activeLevel}. ¿Está listo para explorar la siguiente profundidad de este campo?`
-                    : `¿Ha resonado este conocimiento en su interior? Guarde este registro o comparta el hallazgo en su círculo.`}
-                </p>
-                <div className="flex flex-col w-full sm:w-auto items-center justify-center gap-4 relative z-10">
-                  {["Fundamentos", "Principiante", "Capa 1"].includes(
-                    activeLevel,
-                  ) && (
-                    <button
-                      onClick={() => {
-                        setActiveLevel(
-                          activeLevel === "Fundamentos"
-                            ? "Profundización"
-                            : activeLevel === "Principiante"
-                              ? "Intermedio"
-                              : "Capa 2",
-                        );
-                        window.scrollTo({ top: 0, behavior: "smooth" });
-                      }}
-                      className="flex w-full sm:w-auto justify-center items-center gap-4 bg-brand-ink text-brand-offwhite px-10 py-5 hover:bg-brand-gold hover:text-white transition-all font-bold uppercase tracking-[0.2em] text-[10px] group shadow-lg"
-                    >
-                      Siguiente Capa
-                      <ArrowRightCircle className="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform" />
-                    </button>
-                  )}
-                  {["Profundización", "Intermedio", "Capa 2"].includes(
-                    activeLevel,
-                  ) && (
-                    <button
-                      onClick={() => {
-                        setActiveLevel(
-                          activeLevel === "Profundización"
-                            ? "Frontera"
-                            : activeLevel === "Intermedio"
-                              ? "Avanzado"
-                              : "Capa 3",
-                        );
-                        window.scrollTo({ top: 0, behavior: "smooth" });
-                      }}
-                      className="flex w-full sm:w-auto justify-center items-center gap-4 bg-brand-ink text-brand-offwhite px-10 py-5 hover:bg-brand-gold hover:text-white transition-all font-bold uppercase tracking-[0.2em] text-[10px] group shadow-lg"
-                    >
-                      Siguiente Capa
-                      <ArrowRightCircle className="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform" />
-                    </button>
-                  )}
-                  <div className="flex flex-col sm:flex-row w-full justify-center gap-4 mt-2">
-                    <button className="flex w-full justify-center items-center gap-3 bg-white text-brand-ink border border-brand-ink/20 px-8 py-4 hover:bg-zinc-50 transition-all font-bold uppercase tracking-[0.2em] text-[10px]">
-                      <Bookmark className="w-4 h-4" />
-                      Registrar
-                    </button>
-                    <button className="flex w-full justify-center items-center gap-3 bg-white text-brand-ink border border-brand-ink/20 px-8 py-4 hover:bg-zinc-50 transition-all font-bold uppercase tracking-[0.2em] text-[10px]">
-                      <Share2 className="w-4 h-4" />
-                      Compartir
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* Author Section */}
-              <div className="mt-12 md:mt-16 bg-white p-6 md:p-8 border border-brand-ink/5 flex flex-col sm:flex-row gap-4 sm:gap-6 items-center sm:items-start md:items-center text-center sm:text-left rounded-2xl shadow-sm">
-                <div className="shrink-0 p-1 bg-white border border-brand-ink/10 shadow-sm rounded-full">
-                  <div className="h-16 w-16 md:h-14 md:w-14 bg-brand-ink/5 rounded-full overflow-hidden border-2 border-brand-gold">
-                    <img
-                      src={`https://api.dicebear.com/7.x/initials/svg?seed=${data.author}`}
-                      alt={data.author}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <h4 className="font-serif text-lg md:text-xl mb-1">
-                    {data.author}
-                  </h4>
-                  <p className="text-brand-muted text-xs md:text-sm leading-relaxed max-w-md">
-                    Colaborador especializado en {data.category}. Comprometido
-                    con la difusión del conocimiento y la reflexión crítica.
-                  </p>
-                </div>
-              </div>
-            </article>
-          </div>
-        </div>
-      </LevelProvider>
-
-      {/* JSON-LD for SEO */}
-      <script type="application/ld+json">
-        {JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "Article",
-          headline: data.title,
-          description: data.description,
-          image: data.image,
-          author: {
-            "@type": "Person",
-            name: data.author,
-          },
-          datePublished: data.date,
-          category: data.category,
-        })}
-      </script>
+      </div>
     </div>
+  );
+}
+
+export function ArticlePage(props: any) {
+  return (
+    <LevelProvider>
+      <ArticleContent {...props} />
+    </LevelProvider>
   );
 }

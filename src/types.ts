@@ -16,6 +16,29 @@ export interface ArticleFrontmatter {
   _path?: string;
 }
 
+export interface AeternaAction {
+  tipo: 'BotonSimplificar' | 'BotonProfundizar' | 'BotonEjemplos' | 'BotonConexiones';
+  contenido: string;
+}
+
+export interface AeternaSection {
+  id: string;
+  titulo: string;
+  niveles: {
+    principiante?: string;
+    intermedio?: string;
+    avanzado?: string;
+  };
+  acciones: AeternaAction[];
+}
+
+export interface AeternaArticle {
+  metadata: ArticleFrontmatter;
+  introduccion: string;
+  secciones: AeternaSection[];
+  conclusion?: string;
+}
+
 export interface Author {
   name: string;
   slug: string;

@@ -12,25 +12,18 @@ export function NivelSelector({
 }: NivelSelectorProps) {
   const { activeLevel, setActiveLevel } = useLevel();
 
-  // Initialize with default level if changing page or on mount
-  useEffect(() => {
-    if (nivelPorDefecto && niveles.includes(nivelPorDefecto)) {
-      setActiveLevel(nivelPorDefecto);
-    }
-  }, [nivelPorDefecto, niveles, setActiveLevel]);
-
   return (
-    <div className="flex bg-[#FDF8F0] border border-[#D6C5B3]/60 rounded-full p-1.5 my-10 max-w-lg mx-auto shadow-sm relative z-10">
+    <div className="flex bg-white/5 border border-white/10 backdrop-blur-xl rounded-full p-1.5 my-16 max-w-lg mx-auto shadow-2xl relative z-10">
       {niveles.map(nivel => {
         const isActive = activeLevel.toLowerCase() === nivel.toLowerCase();
         return (
           <button
             key={nivel}
             onClick={() => setActiveLevel(nivel)}
-            className={`flex-1 px-4 py-2.5 text-xs sm:text-sm font-sans font-bold tracking-widest uppercase rounded-full transition-all duration-300 ${
+            className={`flex-1 px-4 py-3 text-[10px] font-sans font-bold tracking-[0.2em] uppercase rounded-full transition-all duration-500 ${
               isActive 
-                ? 'bg-[#8B5A3C] text-white shadow-md transform scale-[1.02]' 
-                : 'text-[#8B6F5A]/70 hover:text-[#5C4336] hover:bg-[#E8D9CC]/30'
+                ? 'bg-[#D4AF37] text-black shadow-[0_0_20px_rgba(212,175,55,0.3)]' 
+                : 'text-white/40 hover:text-white hover:bg-white/5'
             }`}
           >
             {nivel}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Lock, Zap, BookOpen, PenTool, Hourglass, Feather, CheckCircle2 } from 'lucide-react';
+import { Lock, Zap, BookOpen, PenTool, Hourglass, Feather, CheckCircle2, ShieldCheck, Sparkles, ArrowRight } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { cn } from '@/lib/utils';
 import { useGamification, calculateProgressToNextLevel } from '@/context/GamificationContext';
@@ -16,12 +16,12 @@ export interface AeternaDecisionBoxProps {
   completedText?: string;
   onDecision?: () => void;
   className?: string;
-  content?: string; // For Markdown parsing
+  content?: string; 
 }
 
 export function AeternaDecisionBox({
   id,
-  badgeText = "Lectura Aeterna",
+  badgeText = "Fragmento de Destino",
   title = "",
   question,
   levelRequired = 0,
@@ -32,8 +32,9 @@ export function AeternaDecisionBox({
   className,
   content
 }: AeternaDecisionBoxProps) {
-  const { progress, markQuestionAnswered, hasAnsweredQuestion, addXP } = useGamification();
+  const { progress, markQuestionAnswered, hasAnsweredQuestion } = useGamification();
   const [showRewardAnimation, setShowRewardAnimation] = useState(false);
+  const [textValue, setTextValue] = useState("");
   
   const cardRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -43,15 +44,13 @@ export function AeternaDecisionBox({
       particleCount: 150,
       spread: 80,
       origin: { y: 0.6 },
-      colors: ['#D4AF37', '#BA8B4A', '#FBFBF9'] // Gold colors
+      colors: ['#D4AF37', '#BA8B4A', '#FBFBF9'] 
     });
   };
   
-  // 3D tilt effect on hover
   useEffect(() => {
     const card = cardRef.current;
     if (!card) return;
-
     const handleMouseMove = (e: MouseEvent) => {
       const rect = card.getBoundingClientRect();
       const x = e.clientX - rect.left;
@@ -62,11 +61,9 @@ export function AeternaDecisionBox({
       const rotateY = ((x - centerX) / centerX) * 2;
       card.style.transform = `perspective(1200px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
     };
-
     const handleMouseLeave = () => {
       card.style.transform = "perspective(1200px) rotateX(0deg) rotateY(0deg)";
     };
-
     card.addEventListener("mousemove", handleMouseMove);
     card.addEventListener("mouseleave", handleMouseLeave);
     return () => {
@@ -75,16 +72,13 @@ export function AeternaDecisionBox({
     };
   }, []);
 
-  // Golden particles effect
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    
     let animationId: number;
     let particles: any[] = [];
-
     const resizeCanvas = () => {
       if (!canvas.parentElement) return;
       canvas.width = canvas.parentElement.clientWidth;
@@ -92,16 +86,8 @@ export function AeternaDecisionBox({
     };
     resizeCanvas();
     window.addEventListener("resize", resizeCanvas);
-
     class Particle {
-      x: number;
-      y: number;
-      size: number;
-      speedX: number;
-      speedY: number;
-      opacity: number;
-      fadeSpeed: number;
-
+      x: number; y: number; size: number; speedX: number; speedY: number; opacity: number; fadeSpeed: number;
       constructor() {
         this.x = Math.random() * canvas!.width;
         this.y = Math.random() * canvas!.height;
@@ -112,9 +98,7 @@ export function AeternaDecisionBox({
         this.fadeSpeed = Math.random() * 0.006 + 0.002;
       }
       update() {
-        this.x += this.speedX;
-        this.y += this.speedY;
-        this.opacity += this.fadeSpeed;
+        this.x += this.speedX; this.y += this.speedY; this.opacity += this.fadeSpeed;
         if (this.opacity >= 0.6 || this.opacity <= 0.08) this.fadeSpeed *= -1;
         if (this.x < 0) this.x = canvas!.width;
         if (this.x > canvas!.width) this.x = 0;
@@ -122,34 +106,19 @@ export function AeternaDecisionBox({
         if (this.y > canvas!.height) this.y = 0;
       }
       draw() {
-        if (!ctx) return;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(184, 134, 11, ${this.opacity})`;
-        ctx.shadowBlur = 7;
-        ctx.shadowColor = `rgba(184, 134, 11, ${this.opacity * 0.7})`;
-        ctx.fill();
+        if (!ctx) return; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(184, 134, 11, ${this.opacity})`; ctx.shadowBlur = 7;
+        ctx.shadowColor = `rgba(184, 134, 11, ${this.opacity * 0.7})`; ctx.fill();
       }
     }
-
-    for (let i = 0; i < 40; i++) {
-        particles.push(new Particle());
-    }
-
+    for (let i = 0; i < 40; i++) particles.push(new Particle());
     const animate = () => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        particles.forEach((p) => {
-            p.update();
-            p.draw();
-        });
-        animationId = requestAnimationFrame(animate);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => { p.update(); p.draw(); });
+      animationId = requestAnimationFrame(animate);
     };
     animate();
-
-    return () => {
-        cancelAnimationFrame(animationId);
-        window.removeEventListener("resize", resizeCanvas);
-    };
+    return () => { cancelAnimationFrame(animationId); window.removeEventListener("resize", resizeCanvas); };
   }, []);
   
   let finalBadge = badgeText;
@@ -164,7 +133,6 @@ export function AeternaDecisionBox({
     for (const line of lines) {
       const trimmed = line.trim();
       if (!trimmed) continue;
-      
       if (trimmed.startsWith('Badge:')) finalBadge = trimmed.replace('Badge:', '').trim();
       else if (trimmed.startsWith('Título:')) finalTitle = trimmed.replace('Título:', '').trim();
       else if (trimmed.startsWith('Pregunta:')) finalQuestion = trimmed.replace('Pregunta:', '').trim();
@@ -175,153 +143,107 @@ export function AeternaDecisionBox({
   }
 
   const definitiveId = id || btoa(encodeURIComponent(finalQuestion)).substring(0, 32);
-
   const isCompleted = hasAnsweredQuestion(definitiveId);
   const currentLevelStat = calculateProgressToNextLevel(progress.xp);
   const userLevel = currentLevelStat.level;
-  
   const isLocked = userLevel < finalLevel;
 
-  const [textValue, setTextValue] = useState("");
-
   const handleDecision = () => {
-    if (isLocked || isCompleted) return;
-    
+    if (isLocked || isCompleted || !textValue.trim()) return;
     setShowRewardAnimation(true);
     triggerConfetti();
-    markQuestionAnswered(definitiveId, finalXp, `Reflexión: ${finalTitle || finalQuestion.substring(0, 20)}`);
-    
-    setTimeout(() => {
-      setShowRewardAnimation(false);
-    }, 4000);
-    
-    if (onDecision) {
-      onDecision();
-    }
+    markQuestionAnswered(definitiveId, finalXp, `Reflexión: ${finalBadge}`);
+    setTimeout(() => setShowRewardAnimation(false), 4000);
+    if (onDecision) onDecision();
   };
 
   return (
-    <div className={cn("not-prose relative my-8 mx-auto max-w-lg", className)}>
-      {/* Particle background canvas */}
-      <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none z-0 opacity-60 rounded-xl" style={{ width: '100%', height: '100%' }} />
+    <div className={cn("not-prose relative my-24 mx-auto max-w-2xl", className)}>
+      <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none z-0 opacity-40 rounded-[2rem]" style={{ width: '100%', height: '100%' }} />
 
       <div ref={cardRef} className={cn(
-        "relative z-10 bg-[#fefcf5] border border-[#d4af37]/55 rounded-lg shadow-[0_20px_40px_-20px_rgba(0,0,0,0.15),0_0_0_1px_rgba(212,175,55,0.25),inset_0_1px_0_rgba(255,255,240,0.9),inset_0_-1px_0_rgba(0,0,0,0.08)] transition-transform duration-200 ease-out overflow-hidden flex flex-col",
-        !isCompleted && "hover:shadow-[0_25px_50px_-22px_rgba(0,0,0,0.2),0_0_20px_rgba(212,175,55,0.25),0_0_0_2px_rgba(212,175,55,0.4),inset_0_1px_0_rgba(255,255,240,1),inset_0_-1px_0_rgba(0,0,0,0.1)]",
-        isCompleted && "opacity-95 grayscale-[0.2]"
+        "relative z-10 bg-[#fefcf5] border border-[#d4af37]/40 rounded-[2rem] shadow-[0_30px_60px_-20px_rgba(0,0,0,0.2),0_0_0_1px_rgba(212,175,55,0.15)] transition-all duration-700 overflow-hidden flex flex-col p-10 md:p-16",
+        !isCompleted && "hover:shadow-[0_40px_80px_-22px_rgba(0,0,0,0.25),0_0_30px_rgba(212,175,55,0.2)]",
+        isCompleted && "opacity-95 grayscale-[0.1]"
       )}>
-        {/* Left binding edge */}
-        <div className="absolute left-0 top-0 bottom-0 w-2.5 bg-gradient-to-r from-[rgba(184,134,11,0.5)] via-[rgba(212,175,55,0.3)] to-transparent border-r border-[#d4af37]/65 shadow-[2px_0_10px_rgba(0,0,0,0.1)] z-[5]" />
+        {/* Abstract pattern background */}
+        <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
 
-        {/* Logo */}
-        <div className="absolute top-4 left-6 z-20 flex items-center gap-2 bg-white/95 backdrop-blur-md px-3 py-1 rounded border border-[#d4af37]/50 shadow-[0_4px_12px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.12),0_0_0_1px_rgba(212,175,55,0.4)] transition-shadow">
-          <div className="w-5 h-5 rounded-full bg-[radial-gradient(circle,#E8C44A,#B8860B)] shadow-[0_0_8px_rgba(212,175,55,0.5)] flex items-center justify-center font-['Cinzel'] font-bold text-[10px] text-[#1a1a16] font-serif">A</div>
-          <span className="font-['Cinzel'] font-semibold text-[10px] tracking-[0.18em] text-[#8B6914] uppercase font-serif">Aeterna</span>
-        </div>
-
-        {/* Header */}
-        <div className="flex items-center justify-end px-6 py-4 border-b border-[#d4af37]/30 ml-8">
-          <span className="text-[0.55rem] tracking-[0.15em] text-[#8B6F42] uppercase bg-[#d4af37]/12 px-2.5 py-1 rounded border border-[#d4af37]/40 mr-3 font-medium">{finalBadge}</span>
-          <div className="font-['Cinzel'] text-xs text-[#5C4A2E] tracking-[0.1em] font-serif flex items-center">
-             XP <strong className="text-[#8B6914] text-base ml-1.5">{finalXp}</strong>
+        <div className="relative z-10 flex flex-col gap-10">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex items-center gap-5">
+               <div className={cn(
+                 "w-14 h-14 rounded-2xl flex items-center justify-center border shadow-sm transition-all duration-700",
+                 isCompleted ? "bg-emerald-500/10 border-emerald-500/20" : "bg-black/[0.02] border-black/5"
+               )}>
+                  {isCompleted ? <ShieldCheck className="text-emerald-600 w-7 h-7" /> : <Sparkles className="text-[#8B6914] w-7 h-7" />}
+               </div>
+               <div>
+                  <span className="text-[10px] font-mono font-black uppercase tracking-[0.5em] text-[#8B6914] block mb-1">{finalBadge}</span>
+                  <div className="text-[11px] font-mono text-black/30 uppercase tracking-[0.2em]">{isCompleted ? 'Estado: Sincronizado' : `Fragmento de Destino (+${finalXp} XP)`}</div>
+               </div>
+            </div>
+            {isLocked && (
+              <div className="px-5 py-2 rounded-full bg-rose-50 border border-rose-100 text-rose-600 text-[10px] font-bold uppercase tracking-widest flex items-center gap-2">
+                 <Lock size={12} /> Requiere Nivel {finalLevel}
+              </div>
+            )}
           </div>
-        </div>
 
-        {/* Progress Bar (Visual flair for answering state) */}
-        <div className="mx-6 h-[2px] bg-[#d4af37]/20 rounded ml-8">
-          <div
-            className="h-full bg-gradient-to-r from-[#B8860B] via-[#D4AF37] to-[#E8C44A] shadow-[0_0_6px_rgba(212,175,55,0.5)] rounded transition-all duration-1000"
-            style={{ width: isCompleted ? '100%' : '10%' }}
-          />
-        </div>
+          <div className="space-y-6">
+            <h2 className="font-serif text-3xl md:text-5xl text-[#1A1A1A] leading-tight tracking-tight uppercase">{finalQuestion || "Reflexión Aeterna"}</h2>
+            {finalTitle && (
+              <div className="flex gap-6 items-start bg-black/[0.01] p-6 rounded-2xl border border-black/5 shadow-inner">
+                 <div className="w-1 h-12 bg-[#8B6914]/20 rounded-full mt-1" />
+                 <p className="text-[#3E2C23] font-serif text-xl leading-relaxed italic">{finalTitle}</p>
+              </div>
+            )}
+          </div>
 
-        <div className="px-5 sm:px-6 py-4 relative z-10 flex flex-col gap-3 ml-2">
-          {/* Question Text */}
-          <h2 className="font-['Cinzel'] text-sm sm:text-base font-semibold leading-relaxed text-[#2E2416] tracking-wide font-serif mb-1">
-            {finalQuestion}
-          </h2>
-
-          {/* Title box if exists */}
-          {finalTitle && (
-            <div className="bg-[#fffef9] border border-[#d4af37]/35 rounded-lg p-4 sm:p-5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.8)] relative overflow-hidden">
-               <p className="text-[#3E2C23] font-serif text-[15px] md:text-base leading-relaxed relative z-10">
-                {finalTitle}
-               </p>
+          {!isCompleted ? (
+            <div className="relative group">
+               <textarea 
+                 value={textValue}
+                 onChange={(e) => setTextValue(e.target.value)}
+                 className="w-full bg-[#fefcf5] border border-black/10 rounded-[1.5rem] p-8 text-[#1A1A1A] placeholder:text-black/20 focus:outline-none focus:border-[#d4af37]/50 focus:ring-1 focus:ring-[#d4af37]/50 min-h-[180px] resize-none transition-all text-lg font-light leading-relaxed disabled:opacity-30 shadow-inner"
+                 placeholder={isLocked ? `Desbloquea el Nivel ${finalLevel} para procesar este fragmento` : "Expresa tu exégesis aquí..."}
+                 disabled={isCompleted || isLocked}
+               />
+               <div className="absolute bottom-6 right-8 text-[9px] font-mono font-black text-black/10 uppercase tracking-[0.3em]">Cámara de Integridad</div>
+            </div>
+          ) : (
+            <div className="bg-black/[0.02] border border-black/5 rounded-[1.5rem] p-8 italic text-[#1A1A1A]/40 text-xl font-light leading-relaxed text-center">
+               "Su exégesis ha sido grabada en el Registro de la Gnosis Permanente."
             </div>
           )}
-          
-          <div className="relative mt-2">
-             <textarea 
-               value={textValue}
-               onChange={(e) => setTextValue(e.target.value)}
-               className="w-full bg-[#fefcf5] border border-[#d4af37]/30 rounded-lg p-4 text-[#3E2C23] placeholder:text-[#3E2C23]/40 focus:outline-none focus:border-[#d4af37]/70 focus:ring-1 focus:ring-[#d4af37]/70 min-h-[120px] resize-y disabled:opacity-60 disabled:bg-[#f3f0e6] disabled:cursor-not-allowed"
-               placeholder={isLocked ? `Desbloquea el Nivel ${finalLevel} para reflexionar sobre esto` : "Escribe tu reflexión aquí..."}
-               disabled={isCompleted || isLocked}
-             ></textarea>
-          </div>
 
-          <div className="mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10 p-4 rounded-lg border border-[#d4af37]/20 bg-[#d4af37]/5">
+          <div className="flex justify-center mt-4">
             {!isCompleted ? (
               <button
                 onClick={handleDecision}
-                disabled={isLocked}
+                disabled={isLocked || !textValue.trim()}
                 className={cn(
-                  "w-full sm:w-auto bg-gradient-to-r from-[#D4AF37] to-[#E8C44A] text-[#2E2416] rounded px-6 py-2.5 font-sans font-black tracking-[0.2em] uppercase text-[10px] sm:text-xs transition-all shadow-[0_2px_10px_rgba(212,175,55,0.3)]",
-                  isLocked ? "opacity-50 grayscale cursor-not-allowed" : "hover:shadow-[0_4px_15px_rgba(212,175,55,0.5)] hover:-translate-y-0.5 active:scale-95 border border-[#fff4cc]"
+                  "group relative overflow-hidden rounded-xl bg-[#1A1A1A] px-12 py-5 text-[11px] font-black uppercase tracking-[0.5em] text-white transition-all hover:bg-[#8B6914] active:scale-95 disabled:opacity-20",
+                  !isLocked && "shadow-2xl shadow-[#8B6914]/20"
                 )}
               >
-                {finalButton}
+                <span className="relative z-10 flex items-center gap-4">{finalButton} <ArrowRight size={16} /></span>
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
               </button>
             ) : (
-              <span className="text-[#1B5E20] font-serif italic text-base sm:text-lg font-medium flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4" />
-                {completedText}
-              </span>
+              <div className="flex flex-col items-center gap-4">
+                 <div className="px-10 py-4 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-700 text-[10px] font-black uppercase tracking-[0.4em] flex items-center gap-3">
+                   <ShieldCheck size={14} /> {completedText}
+                 </div>
+              </div>
             )}
           </div>
         </div>
 
-        {/* Locked Overlay */}
-        <AnimatePresence>
-          {isLocked && !isCompleted && (
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-white/40 backdrop-blur-md rounded-2xl"
-            >
-              <div className="bg-[#fefcf5] border border-[#d4af37]/40 p-8 rounded-xl flex flex-col items-center text-center w-[90%] max-w-[420px] shadow-[0_10px_40px_rgba(0,0,0,0.1),inset_0_0_20px_rgba(212,175,55,0.05)] relative overflow-hidden">
-                <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent" />
-                
-                <div className="w-16 h-16 bg-[#d4af37]/10 rounded-full border border-[#d4af37]/40 flex items-center justify-center mb-6 shadow-[0_0_15px_rgba(212,175,55,0.15)] relative z-10 backdrop-blur-md">
-                  <Lock className="w-8 h-8 text-[#8B6914] drop-shadow-sm" />
-                </div>
-                
-                <h5 className="text-[#2E2416] font-serif font-semibold text-xl sm:text-2xl mb-3 relative z-10 tracking-wide">
-                  Vínculo Insuficiente
-                </h5>
-                <p className="text-[#5C4336] text-sm sm:text-base mb-8 font-serif leading-relaxed relative z-10 w-[90%] mx-auto">
-                  Requiere <strong className="text-[#8B6914]">Nivel {finalLevel}</strong> para acceder a este portal de conocimiento.
-                </p>
-                
-                <div className="w-full relative z-10 bg-white border border-[#d4af37]/20 p-4 rounded-lg shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]">
-                  <div className="flex justify-between text-xs text-[#8B6914] mb-3 font-sans uppercase tracking-[0.2em] px-1 font-bold">
-                    <span className="opacity-70">NV {userLevel}</span>
-                    <span className="text-[#8B6914]">NV {finalLevel}</span>
-                  </div>
-                  <div className="w-full bg-[#f4ebd0] h-3 rounded-full overflow-hidden shadow-inner border border-[#d4af37]/30">
-                    <motion.div 
-                      className="bg-gradient-to-r from-[#B8860B] via-[#D4AF37] to-[#E8C44A] h-full shadow-[0_0_10px_rgba(212,175,55,0.5)]"
-                      style={{ width: `${Math.min(100, (currentLevelStat.currentLevelXp / currentLevelStat.xpForNextLevel) * 100)}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-        
-        {/* Gaming Effect: Floating XP indicator */}
+        {isLocked && !isCompleted && (
+          <div className="absolute inset-0 z-30 flex items-center justify-center bg-white/50 backdrop-blur-sm pointer-events-none" />
+        )}
+
         <AnimatePresence>
           {showRewardAnimation && (
             <motion.div
@@ -329,7 +251,7 @@ export function AeternaDecisionBox({
               animate={{ y: -150, opacity: 1, scale: 1.5 }}
               exit={{ opacity: 0, scale: 0.8 }}
               transition={{ duration: 2, type: 'spring' }}
-              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-5xl font-serif font-bold text-[#8B6914] drop-shadow-[0_0_15px_rgba(255,255,255,0.8)] z-50 pointer-events-none whitespace-nowrap"
+              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-6xl font-serif font-black text-[#8B6914] drop-shadow-2xl z-50 pointer-events-none whitespace-nowrap"
             >
               <span className="text-[#D4AF37]">+</span>{finalXp} XP
             </motion.div>

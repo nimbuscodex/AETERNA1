@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { HelpCircle, Plus, Minus, Sparkles, Hash, Search, Zap, ShieldCheck } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface FaqItemData {
   question: React.ReactNode;
   answer: React.ReactNode;
-  defaultOpen?: boolean;
-  isCollapsible?: boolean;
 }
 
 interface AeternaFaqProps {
@@ -12,92 +13,114 @@ interface AeternaFaqProps {
   items: FaqItemData[];
 }
 
-export default function AeternaFaq({ title = "❓ Preguntas frecuentes", items }: AeternaFaqProps) {
+export default function AeternaFaq({ title = "EXÉGESIS DE CONSULTA", items }: AeternaFaqProps) {
   return (
-    <div className="not-prose relative w-full max-w-3xl mx-auto mt-12 mb-4 group/faq">
-      {/* Marco decorativo principal */}
-      <div className="absolute inset-0 bg-[#fefcf5] border border-[#d4af37]/40 rounded-2xl shadow-[0_20px_50px_-20px_rgba(0,0,0,0.15),inset_0_0_0_4px_rgba(255,255,255,0.8)] transform -z-10"></div>
-      
-      {/* Esquinas ornamentales */}
-      <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-[#d4af37]/60 rounded-tl-2xl -translate-x-1 -translate-y-1 pointer-events-none transition-all duration-500 group-hover/faq:-translate-x-2 group-hover/faq:-translate-y-2"></div>
-      <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-[#d4af37]/60 rounded-tr-2xl translate-x-1 -translate-y-1 pointer-events-none transition-all duration-500 group-hover/faq:translate-x-2 group-hover/faq:-translate-y-2"></div>
-      <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-[#d4af37]/60 rounded-bl-2xl -translate-x-1 translate-y-1 pointer-events-none transition-all duration-500 group-hover/faq:-translate-x-2 group-hover/faq:translate-y-2"></div>
-      <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-[#d4af37]/60 rounded-br-2xl translate-x-1 translate-y-1 pointer-events-none transition-all duration-500 group-hover/faq:translate-x-2 group-hover/faq:translate-y-2"></div>
-
-      <div className="px-6 py-6 sm:px-12 sm:py-8">
-        <div className="flex flex-col items-center mb-4">
-          {/* Símbolo central arriba del título */}
-          <div className="text-[#8B6914] text-opacity-80">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 2L15 9L22 12L15 15L12 22L9 15L2 12L9 9L12 2Z" fill="currentColor"/>
-            </svg>
-          </div>
-          <h2 className="font-['Cinzel'] text-xl sm:text-2xl text-[#2E2416] text-center tracking-widest font-serif font-bold relative z-10 flex flex-col items-center gap-1 mt-1 [&_p]:m-0 [&_p]:p-0">
-            {title}
-          </h2>
-          <div className="w-24 h-px bg-gradient-to-r from-transparent via-[#d4af37]/60 to-transparent mt-3"></div>
-        </div>
+    <div className="not-prose my-48 mx-auto max-w-5xl px-6">
+      <motion.div 
+        initial={{ opacity: 0, y: 60 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        className="relative group"
+      >
+        {/* Layered Shadow Effect */}
+        <div className="absolute inset-0 bg-[#8B6914]/5 blur-[120px] rounded-full -z-10 group-hover:bg-[#8B6914]/10 transition-colors duration-1000" />
         
-        <div className="space-y-2">
-          {items.map((item, idx) => (
-            <FaqItem 
-              key={idx} 
-              question={item.question} 
-              answer={item.answer} 
-              defaultOpen={idx === 0 ? true : (item.defaultOpen || false)} 
-              isCollapsible={idx === 0 ? false : true}
-            />
-          ))}
+        <div className="bg-[#FDFBF7] rounded-[4rem] p-12 md:p-24 relative overflow-hidden border border-[#d4af37]/20 shadow-2xl shadow-black/10">
+          {/* Top accent bar */}
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-transparent via-[#d4af37]/40 to-transparent" />
+          
+          <header className="relative z-10 flex flex-col items-center text-center mb-24">
+             <div className="w-24 h-24 rounded-full bg-white border border-[#d4af37]/30 flex items-center justify-center mb-10 shadow-xl group-hover:scale-110 transition-transform duration-1000 relative">
+                <div className="absolute inset-2 rounded-full border border-dashed border-[#d4af37]/20 animate-[spin_20s_linear_infinite]" />
+                <HelpCircle className="text-[#8B6914] w-12 h-12" />
+             </div>
+             <span className="text-[11px] font-mono font-black tracking-[1em] text-[#8B6914] uppercase mb-8 ml-[1em]">Resolución de Incógnitas</span>
+             <h2 className="font-serif text-4xl md:text-7xl text-[#1A1A1A] tracking-tighter uppercase mb-6 leading-none italic">{title}</h2>
+             
+             <div className="flex items-center gap-10 w-full max-w-xl mt-12">
+                <div className="h-px flex-1 bg-gradient-to-r from-transparent to-[#d4af37]/30" />
+                <div className="flex gap-2">
+                   <div className="w-1.5 h-1.5 rounded-full bg-[#d4af37]" />
+                   <div className="w-1.5 h-1.5 rounded-full bg-[#d4af37]/40" />
+                   <div className="w-1.5 h-1.5 rounded-full bg-[#d4af37]/10" />
+                </div>
+                <div className="h-px flex-1 bg-gradient-to-l from-transparent to-[#d4af37]/30" />
+             </div>
+          </header>
+
+          <div className="relative z-10 space-y-8 max-w-4xl mx-auto">
+            {items.map((item, idx) => (
+              <FaqItem key={idx} question={item.question} answer={item.answer} index={idx} />
+            ))}
+          </div>
+
+          <footer className="mt-32 pt-16 border-t border-[#d4af37]/10 flex flex-col items-center gap-10 relative z-10">
+             <div className="flex items-center gap-6 bg-white px-10 py-4 rounded-full border border-[#d4af37]/20 shadow-sm group-hover:shadow-md transition-shadow">
+                <Sparkles size={14} className="text-[#8B6914] animate-pulse" />
+                <span className="text-[10px] font-mono text-black font-black uppercase tracking-[0.5em]">Protocolo de Respuesta Universal Sincronizado</span>
+             </div>
+             <p className="text-[#1A1A1A]/20 font-mono text-[9px] uppercase tracking-[0.3em]">Acceso de Nivel Superior Permitido</p>
+          </footer>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
 
-function FaqItem({ question, answer, defaultOpen, isCollapsible = true }: FaqItemData) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-
-  useEffect(() => {
-    if (!isCollapsible) {
-      setIsOpen(true);
-    }
-  }, [isCollapsible]);
+function FaqItem({ question, answer, index }: FaqItemData & { index: number }) {
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className={`faq-item relative group py-2`}>
-      {/* Separador superior sutil para items colapsables */}
-      {isCollapsible && <div className="absolute top-0 inset-x-4 h-px bg-gradient-to-r from-transparent via-[#d4af37]/20 to-transparent"></div>}
-      
-      {/* Línea lateral decorativa en hover o activa */}
-      <div className={`absolute left-0 top-3 bottom-0 w-[3px] rounded-full bg-gradient-to-b from-[#B8860B] via-[#D4AF37] to-transparent transition-all duration-300 ${isOpen ? 'opacity-100 h-[calc(100%-24px)]' : 'opacity-0 h-0 group-hover:opacity-40 group-hover:h-8'}`}></div>
-
-      <div
-        onClick={() => isCollapsible && setIsOpen(!isOpen)}
-        className={`w-full flex items-start justify-between pl-6 pr-2 py-3 bg-transparent text-left font-['Cinzel'] font-semibold text-lg sm:text-[19px] text-[#3E2C23] tracking-wide font-serif ${isCollapsible ? 'cursor-pointer hover:text-[#8B6914] transition-colors' : 'cursor-default'}`}
-        aria-expanded={isOpen}
+    <div className={cn(
+      "rounded-[2.5rem] transition-all duration-700 border relative overflow-hidden",
+      isOpen ? "bg-white border-[#d4af37]/40 shadow-xl" : "bg-transparent border-transparent hover:bg-white/50 hover:border-black/5"
+    )}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between text-left p-10 md:p-14 outline-none group/item"
       >
-        <span className="pr-6 leading-tight flex-1 tracking-wider">{question}</span>
-        {isCollapsible && (
-          <div className="mt-0.5 flex-shrink-0 relative w-7 h-7 flex items-center justify-center rounded-full border border-[#d4af37]/30 bg-white group-hover:border-[#d4af37] transition-colors shadow-[0_2px_4px_rgba(0,0,0,0.05)]">
-            <svg
-              className={`w-3.5 h-3.5 text-[#8B6914] transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isOpen ? 'rotate-180' : 'rotate-0'}`}
-              fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-          </div>
-        )}
-      </div>
-      
-      <div 
-        className={`grid transition-[grid-template-rows,opacity] duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}
-      >
-        <div className="overflow-hidden">
-          <div className="pl-6 pr-4 pb-4 pt-1 font-['Inter'] text-[15px] sm:text-base leading-relaxed text-[#5C4336]">
-            {answer}
-          </div>
+        <div className="flex items-center gap-10">
+           <div className={cn(
+             "w-16 h-16 rounded-2xl flex items-center justify-center font-mono text-lg font-black transition-all duration-1000 border relative shadow-inner",
+             isOpen ? "bg-[#1A1A1A] text-[#D4AF37] border-black" : "bg-white text-black/10 border-black/5 group-hover/item:text-black/30 group-hover/item:border-black/10"
+           )}>
+             {String(index + 1).padStart(2, '0')}
+             {isOpen && <div className="absolute -top-1 -right-1 w-3 h-3 bg-[#D4AF37] rounded-full animate-ping" />}
+           </div>
+           <h3 className={cn(
+             "font-serif text-2xl md:text-4xl tracking-tight transition-all duration-700 leading-tight",
+             isOpen ? "text-[#1A1A1A] font-bold" : "text-[#1A1A1A]/50 group-hover/item:text-[#1A1A1A]"
+           )}>
+             {question}
+           </h3>
         </div>
-      </div>
+        <div className={cn(
+          "shrink-0 w-12 h-12 rounded-full flex items-center justify-center transition-all duration-700 border",
+          isOpen ? "bg-[#D4AF37] text-black border-[#D4AF37] rotate-180" : "bg-white text-black/20 border-black/5"
+        )}>
+           {isOpen ? <Minus size={20} /> : <Plus size={20} />}
+        </div>
+      </button>
+      
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.8, ease: [0.23, 1, 0.32, 1] }}
+          >
+            <div className="px-14 md:px-24 pb-14 md:pb-20">
+               <div className="flex gap-12">
+                  <div className="w-1.5 h-auto bg-gradient-to-b from-[#D4AF37] via-[#D4AF37]/20 to-transparent rounded-full" />
+                  <div className="text-[20px] md:text-[24px] leading-relaxed text-[#3E2C23]/90 font-serif font-light italic py-2">
+                    {answer}
+                  </div>
+               </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
