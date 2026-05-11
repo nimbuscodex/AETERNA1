@@ -10,9 +10,18 @@ interface CategoryCardProps {
   count: number;
 }
 
-export function CategoryCard({ title, description, image, path, count }: CategoryCardProps) {
+export function CategoryCard({
+  title,
+  description,
+  image,
+  path,
+  count,
+}: CategoryCardProps) {
   return (
-    <Link to={path} className="group relative block bg-white border border-brand-border h-[400px]">
+    <Link
+      to={path}
+      className="group relative block bg-white border border-brand-border h-[400px]"
+    >
       <div className="h-full w-full relative overflow-hidden">
         <img
           src={image}
@@ -24,8 +33,12 @@ export function CategoryCard({ title, description, image, path, count }: Categor
           <span className="mb-4 text-[9px] font-sans font-bold uppercase tracking-[0.3em] text-brand-gold">
             {count} Entradas de Conocimiento
           </span>
-          <h3 className="mb-4 font-serif text-3xl text-brand-ink group-hover:italic transition-all">{title}</h3>
-          <p className="text-[13px] text-brand-mixed opacity-60 leading-relaxed max-w-[240px] transition-opacity group-hover:opacity-100">{description}</p>
+          <h3 className="mb-4 font-serif text-[2.25rem] md:text-[2.5rem] tracking-tight text-brand-ink group-hover:italic transition-all">
+            {title}
+          </h3>
+          <p className="font-body text-[1.0625rem] md:text-[1.125rem] text-brand-ink/80 leading-[1.6] max-w-[280px] transition-opacity group-hover:opacity-100">
+            {description}
+          </p>
         </div>
       </div>
     </Link>

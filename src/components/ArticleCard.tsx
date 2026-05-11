@@ -19,16 +19,22 @@ export function ArticleCard({ article, featured }: ArticleCardProps) {
       viewport={{ once: true }}
       className={cn(
         "group flex flex-col gap-8",
-        featured ? "lg:flex-row lg:items-stretch lg:gap-0 border border-brand-border bg-white shadow-3xl relative overflow-hidden" : "bg-transparent"
+        featured
+          ? "lg:flex-row lg:items-stretch lg:gap-0 border border-brand-border bg-white shadow-3xl relative overflow-hidden"
+          : "bg-transparent",
       )}
     >
-      {featured && <div className="absolute inset-0 bg-engraving opacity-[0.03] pointer-events-none" />}
-      
+      {featured && (
+        <div className="absolute inset-0 bg-engraving opacity-[0.03] pointer-events-none" />
+      )}
+
       <Link
         to={articlePath}
         className={cn(
           "relative overflow-hidden bg-brand-ink w-full z-10",
-          featured ? "lg:flex-[1.1] lg:aspect-auto lg:border-r border-brand-border" : "aspect-[16/10] border border-brand-border"
+          featured
+            ? "lg:flex-[1.1] lg:aspect-auto lg:border-r border-brand-border"
+            : "aspect-[16/10] border border-brand-border",
         )}
       >
         <img
@@ -44,15 +50,19 @@ export function ArticleCard({ article, featured }: ArticleCardProps) {
         </div>
       </Link>
 
-      <div className={cn(
-        "flex flex-col justify-between relative z-10",
-        featured ? "lg:flex-1 p-12 lg:p-20" : "py-6"
-      )}>
+      <div
+        className={cn(
+          "flex flex-col justify-between relative z-10",
+          featured ? "lg:flex-1 p-12 lg:p-20" : "py-6",
+        )}
+      >
         <div>
           <div className="flex items-center gap-6 text-[9px] font-sans font-bold text-brand-muted uppercase tracking-[0.4em] mb-10">
             <span className="text-brand-gold">{formatDate(article.date)}</span>
             <span className="h-px w-10 bg-brand-border" />
-            <span className="text-brand-ink opacity-60">Fil. {article.author.split(' ').pop()}</span>
+            <span className="text-brand-ink opacity-60">
+              Fil. {article.author.split(" ").pop()}
+            </span>
           </div>
 
           <Link to={articlePath}>
@@ -67,10 +77,14 @@ export function ArticleCard({ article, featured }: ArticleCardProps) {
             )}
           </Link>
 
-          <p className={cn(
-            "font-sans text-brand-muted leading-relaxed font-light mb-12",
-            featured ? "text-xl max-w-xl" : "text-base line-clamp-3"
-          )}>
+          <p
+            className={cn(
+              "font-body text-brand-ink/80 leading-[1.8] font-normal mb-12",
+              featured
+                ? "text-[1.1875rem] md:text-[1.3125rem] max-w-xl"
+                : "text-[1.0625rem] md:text-[1.125rem] line-clamp-3",
+            )}
+          >
             {article.description}
           </p>
         </div>

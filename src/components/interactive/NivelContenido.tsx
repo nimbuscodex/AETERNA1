@@ -14,9 +14,9 @@ export function NivelContenido({ principiante, intermedio, avanzado }: NivelCont
   const levelKey = activeLevel.toLowerCase();
   
   let content = null;
-  if (levelKey === 'principiante') content = principiante;
-  if (levelKey === 'intermedio') content = intermedio;
-  if (levelKey === 'avanzado') content = avanzado;
+  if (levelKey === 'principiante' || levelKey === 'fundamentos' || levelKey === 'capa 1') content = principiante;
+  if (levelKey === 'intermedio' || levelKey.includes('profundi') || levelKey === 'capa 2') content = intermedio;
+  if (levelKey === 'avanzado' || levelKey === 'frontera' || levelKey === 'capa 3') content = avanzado;
 
   // Fallbacks if a level is missing text, we try to show something so the layout doesn't break
   if (!content) {

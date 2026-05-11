@@ -8,7 +8,7 @@ type LevelContextType = {
 const LevelContext = createContext<LevelContextType | undefined>(undefined);
 
 export function LevelProvider({ children }: { children: React.ReactNode }) {
-  const [activeLevel, setActiveLevel] = useState<string>('Intermedio');
+  const [activeLevel, setActiveLevel] = useState<string>('Fundamentos');
 
   return (
     <LevelContext.Provider value={{ activeLevel, setActiveLevel }}>
@@ -20,7 +20,7 @@ export function LevelProvider({ children }: { children: React.ReactNode }) {
 export function useLevel() {
   const context = useContext(LevelContext);
   if (!context) {
-    return { activeLevel: 'Intermedio', setActiveLevel: () => {} };
+    return { activeLevel: 'Fundamentos', setActiveLevel: () => {} };
   }
   return context;
 }

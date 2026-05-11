@@ -301,7 +301,7 @@ const availableSubcategories = ["Todas", ...Array.from(new Set(selectionItems.fi
               viewport={{ once: true }}
               className="relative"
             >
-              <p className="font-serif text-3xl md:text-5xl text-brand-ink leading-[1.3] text-center italic font-light">
+              <p className="font-serif text-[1.75rem] md:text-[2.25rem] text-brand-ink leading-[1.4] text-center italic font-normal">
                 "{roadmap.content}"
               </p>
             </motion.div>
