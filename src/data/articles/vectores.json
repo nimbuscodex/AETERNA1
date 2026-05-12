@@ -1,7 +1,7 @@
 {
   "metadata": {
     "title": "Vectores en Física: Las Flechas que Describen el Mundo",
-    "description": "Qué son los vectores, cómo sumarlos, descomponerlos y por qué son el lenguaje esencial de la física. Desde caminar en una ciudad hasta lanzar un cohete al espacio.",
+    "description": "Un viaje de tres niveles: de la intuición básica de las flechas a la matemática vectorial avanzada y sus aplicaciones en la ingeniería.",
     "slug": "vectores",
     "author": "Aeterna",
     "category": "ciencias",
@@ -11,14 +11,9 @@
       "vectores",
       "magnitud",
       "dirección",
-      "suma de vectores",
       "descomposición",
-      "producto escalar",
-      "producto vectorial",
-      "MRU",
-      "MRUA"
+      "álgebra vectorial"
     ],
-    "image": "https://images.unsplash.com/photo-1596408420457-2e16db03672a?q=80&w=2070&auto=format&fit=crop",
     "date": "2026-05-11",
     "nivel": "1",
     "orden": "5",
@@ -36,102 +31,26 @@
   "introduccion": "",
   "secciones": [
     {
-      "id": "-bienvenida-por-qu-los-nmeros-solos-no-bastan",
-      "titulo": "▶️ Bienvenida: Por qué los números solos no bastan",
+      "id": "-nivel-1-conceptos-fundamentales-la-intuicin",
+      "titulo": "🟢 Nivel 1: Conceptos Fundamentales (La Intuición)",
       "niveles": {
-        "principiante": "Imagina que alguien te dice: \"Camina 10 metros\". ¿Suficiente información? **No.**\n\n- ¿En qué dirección? ¿Hacia el norte? ¿Hacia arriba una escalera? ¿Hacia un precipicio?\n- La distancia sin dirección es un número cualquiera. La distancia **con** dirección es algo mucho más poderoso.\n\nEn física, casi nada se describe con un solo número. Cuando un avión vuela a 900 km/h, esa cifra sin dirección no sirve de nada: ¿va al norte, al este, subiendo, bajando? La física necesita un lenguaje que combine **cantidad** y **dirección** en un solo objeto matemático.\n\nEse objeto se llama **vector**, y es probablemente la herramienta más importante que vas a aprender en toda la física.\n\n> **💡 La clave en 10 segundos**\n>\n> > Un **vector** es una flecha matemática: tiene **magnitud** (¿qué tan larga es?), **dirección** (¿hacia dónde apunta?) y **sentido** (¿de izquierda a derecha o de derecha a izquierda?). Sin vectores, no podrías describir el movimiento, las fuerzas, la velocidad ni prácticamente nada en física.\n\n---\n\n<!-- ============================================ -->\n<!-- CAPA 1: INTUICIÓN — FLECHAS EN EL MUNDO REAL -->\n<!-- ============================================ -->",
-        "intermedio": "Imagina que alguien te dice: \"Camina 10 metros\". ¿Suficiente información? **No.**\n\n- ¿En qué dirección? ¿Hacia el norte? ¿Hacia arriba una escalera? ¿Hacia un precipicio?\n- La distancia sin dirección es un número cualquiera. La distancia **con** dirección es algo mucho más poderoso.\n\nEn física, casi nada se describe con un solo número. Cuando un avión vuela a 900 km/h, esa cifra sin dirección no sirve de nada: ¿va al norte, al este, subiendo, bajando? La física necesita un lenguaje que combine **cantidad** y **dirección** en un solo objeto matemático.\n\nEse objeto se llama **vector**, y es probablemente la herramienta más importante que vas a aprender en toda la física.\n\n> **💡 La clave en 10 segundos**\n>\n> > Un **vector** es una flecha matemática: tiene **magnitud** (¿qué tan larga es?), **dirección** (¿hacia dónde apunta?) y **sentido** (¿de izquierda a derecha o de derecha a izquierda?). Sin vectores, no podrías describir el movimiento, las fuerzas, la velocidad ni prácticamente nada en física.\n\n---\n\n<!-- ============================================ -->\n<!-- CAPA 1: INTUICIÓN — FLECHAS EN EL MUNDO REAL -->\n<!-- ============================================ -->",
-        "avanzado": "Imagina que alguien te dice: \"Camina 10 metros\". ¿Suficiente información? **No.**\n\n- ¿En qué dirección? ¿Hacia el norte? ¿Hacia arriba una escalera? ¿Hacia un precipicio?\n- La distancia sin dirección es un número cualquiera. La distancia **con** dirección es algo mucho más poderoso.\n\nEn física, casi nada se describe con un solo número. Cuando un avión vuela a 900 km/h, esa cifra sin dirección no sirve de nada: ¿va al norte, al este, subiendo, bajando? La física necesita un lenguaje que combine **cantidad** y **dirección** en un solo objeto matemático.\n\nEse objeto se llama **vector**, y es probablemente la herramienta más importante que vas a aprender en toda la física.\n\n> **💡 La clave en 10 segundos**\n>\n> > Un **vector** es una flecha matemática: tiene **magnitud** (¿qué tan larga es?), **dirección** (¿hacia dónde apunta?) y **sentido** (¿de izquierda a derecha o de derecha a izquierda?). Sin vectores, no podrías describir el movimiento, las fuerzas, la velocidad ni prácticamente nada en física.\n\n---\n\n<!-- ============================================ -->\n<!-- CAPA 1: INTUICIÓN — FLECHAS EN EL MUNDO REAL -->\n<!-- ============================================ -->"
+        "intermedio": "### 1.1 El problema de los \"números solos\"\nImagina que te piden caminar 10 metros. ¿Sabes a dónde llegarás? No. Te falta información crucial. En física, los números solos (escalares) no son suficientes para describir el mundo. La temperatura (20°C) o la masa (5kg) no necesitan una dirección, pero el movimiento sí.\n\nCuando necesitas especificar **cuánto** y **hacia dónde**, usas un vector. Un vector es simplemente una flecha que nos dice el camino.\n\n### 1.2 Anatomía de una flecha\nCada vector tiene tres componentes básicos que definen su personalidad:\n*   **Magnitud:** El tamaño de la flecha (la intensidad).\n*   **Dirección:** La inclinación (el ángulo respecto a un eje).\n*   **Sentido:** La punta de la flecha (hacia dónde apunta exactamente).\n\nSi cambias cualquiera de estos tres, cambias el vector. Si dos personas caminan a la misma velocidad pero en direcciones opuestas, sus vectores velocidad son diferentes.\n\n### 1.3 Escalares vs. Vectores: El mapa de tu vida\n*   **Escalares:** Cosas que solo tienen \"cantidad\" (tiempo, masa, energía). Se suman como números comunes.\n*   **Vectores:** Cosas que tienen \"cantidad\" y \"dirección\" (velocidad, fuerza, desplazamiento). Se suman como flechas.\n\n---"
       },
       "acciones": []
     },
     {
-      "id": "-capa-i-intuicin---vectores-estn-en-todas-partes",
-      "titulo": "🌱 Capa I: Intuición - Vectores están en todas partes",
+      "id": "-nivel-2-profundidad-tcnica-la-herramienta",
+      "titulo": "🟡 Nivel 2: Profundidad Técnica (La Herramienta)",
       "niveles": {
-        "principiante": "### 1.1 Escalar vs. Vector: la diferencia que lo cambia todo\n\nLa física maneja dos tipos de cantidades:\n\n| Tipo | Definición | Ejemplos | Se escribe con... |\n|:----:|:-----------|:---------|:------------------:|\n| **Escalar** | Solo tiene magnitud (número + unidad) | Masa (5 kg), temperatura (25°C), tiempo (10 s), energía (100 J) | Número simple: *m = 5* |\n| **Vector** | Tiene magnitud **y** dirección | Velocidad (60 km/h hacia el norte), fuerza (10 N empujando a la derecha), desplazamiento (5 m en diagonal) | Flecha: **v** o con flecha encima: $\\vec{v}$ |\n\n**Ejemplo para que lo sientas:**\n\nDices que caminaste **5 kilómetros**. Eso es un escalar: solo distancia total. Pero si dices que caminaste **5 kilómetros hacia el este**, eso ya es un vector: tienes magnitud (5 km) y dirección (este).\n\n¿La diferencia importa? **Absolutamente todo.** Un coche a 100 km/h hacia el norte y otro a 100 km/h hacia el sur tienen la misma **rapidez** (escalar), pero **velocidades** (vectores) completamente opuestas. En un choque frontal, la diferencia entre escalar y vector se mide en vidas.\n\n### 1.2 Representar vectores: la flecha\n\nUn vector se dibuja como una **flecha**:\n\n- **La longitud** de la flecha → magnitud (cuánto)\n- **La dirección** de la flecha → hacia dónde\n- **La punta** de la flecha → sentido (empieza en la cola, termina en la punta)\n\n```\n     ↑ B (magnitud = 5, dirección = norte)\n     |\n     |\n     ● A\n\n     ↗ C (magnitud = 3, dirección = noreste a 45°)\n```\n\n> **🧠 Dato que rompe el cerebro**\n>\n> > Un vector **no tiene posición fija**. Puedes deslizarlo por el papel sin cambiarlo. Lo que importa es su longitud, dirección y sentido, no dónde lo dibujes. Dos flechas idénticas en lugares distintos representan el **mismo vector**.\n\n---"
+        "intermedio": "### 2.1 Descomposición: Proyectando sombras\nPara operar con vectores en cálculos reales, usamos un sistema de coordenadas (usualmente el plano cartesiano). Cualquier vector puede descomponerse en sus sombras sobre los ejes X e Y:\n*   $V_x = V \\cdot \\cos(\\theta)$\n*   $V_y = V \\cdot \\sin(\\theta)$\n\nEsto nos permite convertir un problema complejo en dos problemas simples en una dimensión.\n\n### 2.2 Álgebra Vectorial: Suma y Resta\nPara sumar vectores, nunca sumes sus magnitudes directamente (a menos que vayan en la misma dirección). Debes sumar sus componentes:\n*   $\\vec{R}_x = A_x + B_x$\n*   $\\vec{R}_y = A_y + B_y$\n\nLa magnitud resultante se obtiene con Pitágoras: $|\\vec{R}| = \\sqrt{R_x^2 + R_y^2}$.\n\n### 2.3 Operaciones Avanzadas\n*   **Producto Escalar ($\\vec{A} \\cdot \\vec{B}$):** Nos da un número. Es una medida de cuánto \"coinciden\" dos vectores. Si son perpendiculares, el resultado es 0.\n*   **Producto Vectorial ($\\vec{A} \\times \\vec{B}$):** Nos da un **nuevo vector** perpendicular a los otros dos. Es la clave para entender el torque y el magnetismo.\n\n---"
       },
       "acciones": []
     },
     {
-      "id": "13-las-partes-de-un-vector-descomponer-para-conquistar",
-      "titulo": "1.3 Las partes de un vector: descomponer para conquistar",
+      "id": "-nivel-3-aplicaciones-avanzadas-el-desafo",
+      "titulo": "🔴 Nivel 3: Aplicaciones Avanzadas (El Desafío)",
       "niveles": {
-        "principiante": "Cualquier vector se puede **descomponer** en partes más simples, llamadas **componentes**. Es como descomponer un movimiento diagonal en un movimiento horizontal y otro vertical.\n\nSi tienes un vector **V** que forma un ángulo θ con la horizontal:\n\n```\n         /|\n        / |\n    V  /  |  V_y (componente vertical)\n      /   |\n     / θ  |\n    /_____|\n    V_x    (componente horizontal)\n```\n\nLas fórmulas mágicas:\n\n$$V_x = V \\cdot \\cos(\\theta)$$\n\n$$V_y = V \\cdot \\sin(\\theta)$$\n\nY para reconstruir el vector a partir de sus componentes:\n\n$$V = \\sqrt{V_x^2 + V_y^2}$$\n\n$$\\theta = \\arctan\\left(\\frac{V_y}{V_x}\\right)$$\n\n**Ejemplo:** Un avión vuela a 200 km/h en una dirección que forma 30° con el norte.\n- Componente norte: 200 × cos(30°) = 173,2 km/h\n- Componente este: 200 × sin(30°) = 100 km/h\n\nEl avión avanza 173 km/h hacia el norte **y** 100 km/h hacia el este **simultáneamente**.\n\n---\n\n<!-- ============================================ -->\n<!-- CAPA 2: HERRAMIENTAS — OPERACIONES CON VECTORES -->\n<!-- ============================================ -->"
-      },
-      "acciones": []
-    },
-    {
-      "id": "21-suma-de-vectores-juntar-fuerzas",
-      "titulo": "2.1 Suma de vectores: juntar fuerzas",
-      "niveles": {
-        "principiante": "¿Y si dos fuerzas actúan sobre un objeto al mismo tiempo? Se **suman**, pero no como números normales. Se suman **como flechas**.\n\n### Método del paralelogramo\n\nColoca las dos flechas partiendo del mismo punto. Completa un paralelogramo. La **diagonal** es el resultado.\n\n```\n  F₁ ↗\n      \\  ↗ R (resultante)\n       \\/\n       /\\\n  F₂ ↗\n```\n\n### Método del triángulo (o \"nariz a cola\")\n\nColoca la cola de la segunda flecha en la punta de la primera. La resultante va de la cola de la primera a la punta de la segunda.\n\n```\nF₁ ——→——→ F₂\n↑               ↑\ncola            punta\n         ↗ R\n```\n\n### Suma por componentes (el método más potente)\n\nDescompón ambos vectores en X e Y, **suma por separado** y reconstruye:\n\n$$R_x = A_x + B_x$$\n$$R_y = A_y + B_y$$\n$$R = \\sqrt{R_x^2 + R_y^2}$$\n\n**Ejemplo:**\n- Fuerza A: 10 N hacia el este → A_x = 10, A_y = 0\n- Fuerza B: 10 N hacia el norte → B_x = 0, B_y = 10\n- Resultante: R_x = 10, R_y = 10\n- R = √(100 + 100) = √200 ≈ **14,14 N** en dirección noreste (45°)\n\n---"
-      },
-      "acciones": []
-    },
-    {
-      "id": "22-resta-de-vectores-la-diferencia-importa",
-      "titulo": "2.2 Resta de vectores: la diferencia importa",
-      "niveles": {
-        "principiante": "Restar un vector equivale a **sumar su opuesto** (misma magnitud, dirección contraria):\n\n$$\\vec{A} - \\vec{B} = \\vec{A} + (-\\vec{B})$$\n\n**Ejemplo cotidiano:** Tu velocidad respecto al suelo es 5 m/s hacia adelante. El viento sopla a 3 m/s en tu contra. Tu velocidad **resultante** respecto al aire es 5 − (−3) = 8 m/s.\n\n---"
-      },
-      "acciones": []
-    },
-    {
-      "id": "23-multiplicacin-por-un-escalar-estirar-y-girar",
-      "titulo": "2.3 Multiplicación por un escalar: estirar y girar",
-      "niveles": {
-        "principiante": "Cuando multiplicas un vector por un número, cambias su magnitud (y su sentido si el número es negativo):\n\n- **3 × v** → misma dirección, triple longitud\n- **−2 × v** → dirección opuesta, doble longitud\n- **0.5 × v** → misma dirección, mitad de longitud\n\nEsto es útil para escalar fuerzas, ajustar velocidades o calcular puntos medios.\n\n---"
-      },
-      "acciones": []
-    },
-    {
-      "id": "24-producto-escalar-punto-cunto-se-ayudan-dos-vectores",
-      "titulo": "2.4 Producto escalar (punto): ¿cuánto se \"ayudan\" dos vectores?",
-      "niveles": {
-        "principiante": "El **producto escalar** responde a una pregunta fundamental: *¿cuánto de un vector va en la dirección del otro?*\n\n$$\\vec{A} \\cdot \\vec{B} = |A| \\cdot |B| \\cdot \\cos(\\theta)$$\n\nDonde θ es el ángulo entre ambos vectores.\n\n### ¿Qué significa el resultado?\n\n| Resultado | Interpretación |\n|:---------:|:---------------|\n| **Positivo** | Los vectores apuntan más o menos en la misma dirección |\n| **Cero** | Los vectores son perpendiculares (no se \"ayudan\" en absoluto) |\n| **Negativo** | Los vectores apuntan en direcciones opuestas |\n\n**El producto escalar es un número (escalar), no un vector.**\n\n### Trabajo: el ejemplo más importante\n\nEn física, el **trabajo** se calcula con un producto escalar:\n\n$$W = \\vec{F} \\cdot \\vec{d} = F \\cdot d \\cdot \\cos(\\theta)$$\n\nSi empujas un carrito 10 metros con una fuerza de 50 N en un ángulo de 60° con la horizontal:\n\n$$W = 50 \\times 10 \\times \\cos(60°) = 500 \\times 0{,}5 = 250 \\text{ J}$$\n\nSolo la **componente horizontal** de tu fuerza hace trabajo útil. La componente vertical empuja hacia abajo contra el suelo, pero no mueve el carrito.\n\n---"
-      },
-      "acciones": []
-    },
-    {
-      "id": "25-producto-vectorial-cruz-cuando-la-perpendicular-importa",
-      "titulo": "2.5 Producto vectorial (cruz): cuando la perpendicular importa",
-      "niveles": {
-        "principiante": "El **producto vectorial** genera un nuevo vector perpendicular a los dos originales:\n\n$$\\vec{A} \\times \\vec{B} = |A| \\cdot |B| \\cdot \\sin(\\theta) \\cdot \\hat{n}$$\n\nDonde $\\hat{n}$ es un vector unitario perpendicular al plano de A y B (determinado por la **regla de la mano derecha**).\n\n### ¿Para qué sirve?\n\n| Aplicación | Fórmula |\n|:-----------|:--------|\n| **Torque (par de torsión)** | $\\vec{\\tau} = \\vec{r} \\times \\vec{F}$ |\n| **Fuerza magnética** | $\\vec{F} = q\\vec{v} \\times \\vec{B}$ |\n| **Momento angular** | $\\vec{L} = \\vec{r} \\times \\vec{p}$ |\n\n**Ejemplo:** Cuando aflojas un tornillo, aplicas una fuerza en un punto a cierta distancia del centro. El torque depende de cuán lejos apliques la fuerza (brazo de palanca) y del ángulo. Si empujas **perpendicular** a la llave, obtienes el máximo torque. Si empujas **paralelo**, no giras nada.\n\n> **❌ Error común**\n>\n> > **[El error]:** \"El producto vectorial da un número más grande que el producto escalar, así que es 'mejor'.\"\n> >\n> > **[La realidad]:** No son comparables. El producto escalar mide **cuánto coinciden** dos vectores en dirección. El producto vectorial mide **cuánto se complementan** en perpendicularidad. Son herramientas distintas para preguntas distintas.\n\n---\n\n<!-- ============================================ -->\n<!-- CAPA 3: PONIÉNDOLO EN PRÁCTICA -->\n<!-- ============================================ -->"
-      },
-      "acciones": []
-    },
-    {
-      "id": "31-por-qu-los-vectores-hacen-que-la-fsica-funcione",
-      "titulo": "3.1 ¿Por qué los vectores hacen que la física funcione?",
-      "niveles": {
-        "principiante": "Sin vectores, la física sería una colección de números sueltos sin relación espacial. Los vectores nos permiten:\n\n- **Describir el movimiento** en 2D y 3D (no solo en línea recta)\n- **Sumar fuerzas** que actúan desde diferentes direcciones\n- **Calcular trabajo** cuando la fuerza no es paralela al desplazamiento\n- **Entender campos** (eléctricos, magnéticos, gravitatorios) como vectores en cada punto del espacio\n- **Predecir trayectorias** (lanzamientos, órbitas, navegación)\n\n### De los vectores a toda la física\n\nLos vectores son el **puente** entre el álgebra que aprendes en clase y la realidad que observas. Cada vez que veas una flecha en un libro de física, recuerda: eso es un vector, y contiene toda la información que necesitas para resolver el problema.\n\n| Concepto físico | Cantidad vectorial involucrada |\n|:----------------|:-------------------------------|\n| Movimiento | Desplazamiento, velocidad, aceleración |\n| Fuerzas | Peso, tensión, fricción, fuerza normal |\n| Campos | Campo eléctrico, campo magnético, campo gravitatorio |\n| Momentos | Torque, momento angular |\n| Ondas | Amplitud, dirección de propagación |\n\n---"
-      },
-      "acciones": []
-    },
-    {
-      "id": "-sistema-aeterna-qu-acabas-de-aprender",
-      "titulo": "🧠 Sistema Aeterna: ¿Qué acabas de aprender?",
-      "niveles": {
-        "principiante": "> **🧠 Sistema Aeterna, paso 1: La flecha lo es todo**\n>\n> > Cada vez que veas un fenómeno físico, pregúntate: \"¿esto se puede representar como una flecha?\" Si la respuesta es sí, ya estás pensando como un físico. Fuerzas, velocidades, campos, momentos: todos son vectores.\n\n> **🧠 Sistema Aeterna, paso 2: Descomponer es dominar**\n>\n> > Un problema que parece imposible en diagonal se convierte en dos problemas fáciles en horizontal y vertical. Descomponer vectores es la estrategia más poderosa de la física clásica. Practica hasta que sea automático.\n\n> **🧠 Sistema Aeterna, paso 3: El contexto importa**\n>\n> > Un vector por sí solo no dice mucho. Siempre necesitas saber **dónde** y **hacia dónde**. La misma fuerza de 100 N puede detener un coche (aplicada en la dirección del movimiento) o no hacer nada útil (aplicada perpendicularmente). La dirección lo es todo.\n\n---"
-      },
-      "acciones": []
-    },
-    {
-      "id": "-preguntas-frecuentes-sobre-vectores-en-fsica",
-      "titulo": "❓ Preguntas frecuentes sobre Vectores en Física",
-      "niveles": {
-        "principiante": "> **❓ ¿Por qué no puedo simplemente sumar las magnitudes de dos vectores?**\n>\n> Porque los vectores tienen dirección. Si caminas 3 metros al norte y luego 4 metros al este, no has recorrido 7 metros en total respecto al origen; has recorrido 5 metros en diagonal (por el teorema de Pitágoras). Solo si dos vectores apuntan exactamente en la misma dirección puedes sumar sus magnitudes directamente.\n\n> **❓ ¿Cuál es la diferencia entre rapidez y velocidad?**\n>\n> La **rapidez** (speed) es un escalar: dice cuánto te mueves por unidad de tiempo. La **velocidad** (velocity) es un vector: dice cuánto te mueves y **hacia dónde**. Si conduces a 100 km/h en una circunvalación, tu rapidez es constante, pero tu velocidad cambia constantemente porque la dirección cambia.\n\n> **❓ ¿Qué es la regla de la mano derecha y por qué la necesito?**\n>\n> Es una convención para determinar la dirección del producto vectorial. Extiende tu mano derecha: apunta los dedos en la dirección del primer vector (A), gira el puño hacia el segundo vector (B). Tu **pulgar** apunta en la dirección de A × B. Parece arbitrario, pero es esencial para describir fenómenos como la fuerza magnética sobre una carga en movimiento.\n\n> **❓ ¿Los vectores solo existen en 2D y 3D?**\n>\n> Físicamente, vivimos en 3 dimensiones espaciales, así que los vectores que usamos en física clásica tienen 2 o 3 componentes. Sin embargo, en matemáticas avanzadas puedes trabajar con vectores en cualquier número de dimensiones. En mecánica cuántica, por ejemplo, el \"espacio de estados\" de una partícula puede tener infinitas dimensiones.\n\n---",
-        "intermedio": "> **❓ ¿Por qué no puedo simplemente sumar las magnitudes de dos vectores?**\n>\n> Porque los vectores tienen dirección. Si caminas 3 metros al norte y luego 4 metros al este, no has recorrido 7 metros en total respecto al origen; has recorrido 5 metros en diagonal (por el teorema de Pitágoras). Solo si dos vectores apuntan exactamente en la misma dirección puedes sumar sus magnitudes directamente.\n\n> **❓ ¿Cuál es la diferencia entre rapidez y velocidad?**\n>\n> La **rapidez** (speed) es un escalar: dice cuánto te mueves por unidad de tiempo. La **velocidad** (velocity) es un vector: dice cuánto te mueves y **hacia dónde**. Si conduces a 100 km/h en una circunvalación, tu rapidez es constante, pero tu velocidad cambia constantemente porque la dirección cambia.\n\n> **❓ ¿Qué es la regla de la mano derecha y por qué la necesito?**\n>\n> Es una convención para determinar la dirección del producto vectorial. Extiende tu mano derecha: apunta los dedos en la dirección del primer vector (A), gira el puño hacia el segundo vector (B). Tu **pulgar** apunta en la dirección de A × B. Parece arbitrario, pero es esencial para describir fenómenos como la fuerza magnética sobre una carga en movimiento.\n\n> **❓ ¿Los vectores solo existen en 2D y 3D?**\n>\n> Físicamente, vivimos en 3 dimensiones espaciales, así que los vectores que usamos en física clásica tienen 2 o 3 componentes. Sin embargo, en matemáticas avanzadas puedes trabajar con vectores en cualquier número de dimensiones. En mecánica cuántica, por ejemplo, el \"espacio de estados\" de una partícula puede tener infinitas dimensiones.\n\n---",
-        "avanzado": "> **❓ ¿Por qué no puedo simplemente sumar las magnitudes de dos vectores?**\n>\n> Porque los vectores tienen dirección. Si caminas 3 metros al norte y luego 4 metros al este, no has recorrido 7 metros en total respecto al origen; has recorrido 5 metros en diagonal (por el teorema de Pitágoras). Solo si dos vectores apuntan exactamente en la misma dirección puedes sumar sus magnitudes directamente.\n\n> **❓ ¿Cuál es la diferencia entre rapidez y velocidad?**\n>\n> La **rapidez** (speed) es un escalar: dice cuánto te mueves por unidad de tiempo. La **velocidad** (velocity) es un vector: dice cuánto te mueves y **hacia dónde**. Si conduces a 100 km/h en una circunvalación, tu rapidez es constante, pero tu velocidad cambia constantemente porque la dirección cambia.\n\n> **❓ ¿Qué es la regla de la mano derecha y por qué la necesito?**\n>\n> Es una convención para determinar la dirección del producto vectorial. Extiende tu mano derecha: apunta los dedos en la dirección del primer vector (A), gira el puño hacia el segundo vector (B). Tu **pulgar** apunta en la dirección de A × B. Parece arbitrario, pero es esencial para describir fenómenos como la fuerza magnética sobre una carga en movimiento.\n\n> **❓ ¿Los vectores solo existen en 2D y 3D?**\n>\n> Físicamente, vivimos en 3 dimensiones espaciales, así que los vectores que usamos en física clásica tienen 2 o 3 componentes. Sin embargo, en matemáticas avanzadas puedes trabajar con vectores en cualquier número de dimensiones. En mecánica cuántica, por ejemplo, el \"espacio de estados\" de una partícula puede tener infinitas dimensiones.\n\n---"
-      },
-      "acciones": []
-    },
-    {
-      "id": "-siguiente-parada-en-la-ruta",
-      "titulo": "⚠️ Siguiente parada en la ruta",
-      "niveles": {
-        "principiante": "> **⚠️ Siguiente parada: Cinemática**\n>\n> Ahora que dominas los vectores, es momento de aplicarlos para describir el movimiento. Aprenderás cómo describir dónde está un objeto, cuán rápido se mueve y cómo cambia su velocidad, todo usando el lenguaje vectorial que acabas de dominar. [Sigue la ruta →](#)\n\n---\n\n**📚 Para seguir explorando:**\n- *\"Fundamentos de Física\"* de David Halliday, Resnick y Walker — Excelente capítulo introductorio sobre vectores con decenas de ejercicios progresivos.\n- *\"3Blue1Brown — Essence of Linear Algebra\"* (YouTube) — Serie visual extraordinaria para entender vectores de forma intuitiva, mucho más allá de la física.\n- *\"Khan Academy — Preparación de física\"* — Sección sobre vectores con ejercicios interactivos y explicaciones paso a paso."
+        "intermedio": "### 3.1 La regla de la mano derecha en el espacio\nEl producto vectorial no es solo una operación; es la base de cómo el universo gestiona las rotaciones. La regla de la mano derecha nos permite predecir el comportamiento de ejes de giro en 3D, algo esencial para la ingeniería de motores y la mecánica celeste.\n\n### 3.2 Problema de reto: Navegación aérea con viento cruzado\nUn avión quiere volar hacia el norte a 200 km/h, pero hay un viento cruzado desde el este a 50 km/h. \n*   **Desafío:** ¿En qué dirección debe apuntar su nariz el piloto para que su vector velocidad resultante respecto al suelo sea exactamente hacia el norte? \n*   *Análisis:* Debes realizar una suma vectorial donde la velocidad del avión respecto al aire más la velocidad del viento iguale la velocidad deseada respecto al suelo.\n\n### 3.3 El límite de los vectores\nEn niveles avanzados, los vectores son casos particulares de objetos llamados **Tensores**. Mientras que un vector describe una magnitud en una dirección, un tensor puede describir esfuerzos en materiales, deformaciones o la curvatura del espacio-tiempo en la Relatividad General de Einstein. Si dominas los vectores hoy, estás abriendo la puerta a la física de alto nivel."
       },
       "acciones": []
     }
